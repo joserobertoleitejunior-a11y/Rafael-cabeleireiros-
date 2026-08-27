@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no, date=no, address=no">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Rafael Painel">
+<title>Painel — Rafael Cabeleireiros</title>
+<meta name="description" content="Painel interno do Rafael Cabeleireiros — caixa, dashboard, clientes, serviços e galeria.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#121110">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23121110'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle' fill='%23C9A227'%3ER%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+<link rel="stylesheet" href="assets/css/widget.css">
+<link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body class="admin-page">
+
+  <!-- Trava simples por PIN (fica só neste navegador — não é autenticação real) -->
+  <div class="admin-pin-screen" id="pinScreen">
+    <div class="admin-pin-box">
+      <span class="brand-mark">❧</span>
+      <h1 id="pinTitle">Painel Rafael Cabeleireiros</h1>
+      <p id="pinSubtitle">Digite a senha pra entrar.</p>
+      <input class="admin-pin-input" id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="••••">
+      <button class="adm-btn adm-btn-block" id="pinSubmit" type="button" style="margin-top:1rem;">Entrar</button>
+      <p class="admin-pin-error" id="pinError"></p>
+      <p class="admin-pin-hint">Essa senha fica salva só neste aparelho/navegador — é uma trava simples pra quem passar na frente da tela não mexer, não é um login de verdade (sem servidor, não dá pra ter isso de graça).</p>
+    </div>
+  </div>
+
+  <div id="adminApp" style="display:none;">
+    <header class="admin-topbar">
+      <span class="brand"><span class="dot"></span> RAFAEL · PAINEL</span>
+      <div style="display:flex; gap:0.6rem;">
+        <button class="admin-back" id="lockBtn" type="button">Bloquear</button>
+        <a class="admin-back" href="index.html">Ver site</a>
+      </div>
+    </header>
+
+    <nav class="admin-tabs" role="tablist">
+      <button class="admin-tab active" type="button" data-view="pdv">Caixa PDV</button>
+      <button class="admin-tab" type="button" data-view="dashboard">Dashboard</button>
+      <button class="admin-tab" type="button" data-view="clientes">Clientes</button>
+      <button class="admin-tab" type="button" data-view="servicos">Serviços e Valores</button>
+      <button class="admin-tab" type="button" data-view="galeria">Galeria</button>
+    </nav>
+
+    <section class="admin-view active" id="view-pdv"></section>
+    <section class="admin-view" id="view-dashboard"></section>
+    <section class="admin-view" id="view-clientes"></section>
+    <section class="admin-view" id="view-servicos"></section>
+    <section class="admin-view" id="view-galeria"></section>
+  </div>
+
+  <div class="adm-modal-overlay" id="admModalOverlay">
+    <div class="adm-modal" id="admModalContent"></div>
+  </div>
+
+  <!-- Mesma agenda pública, reaproveitada pro fluxo "agendar pra depois" do PDV -->
+  <div class="wizard-overlay" id="wizardOverlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Agendar horário">
+    <span class="corner-mark tl" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none"><path d="M4,32 L4,10 Q4,4 10,4 L32,4" stroke="currentColor" stroke-width="2"/><circle cx="4" cy="4" r="3" fill="currentColor"/></svg></span>
+    <span class="corner-mark tr" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none"><path d="M4,32 L4,10 Q4,4 10,4 L32,4" stroke="currentColor" stroke-width="2"/><circle cx="4" cy="4" r="3" fill="currentColor"/></svg></span>
+    <span class="corner-mark br" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none"><path d="M4,32 L4,10 Q4,4 10,4 L32,4" stroke="currentColor" stroke-width="2"/><circle cx="4" cy="4" r="3" fill="currentColor"/></svg></span>
+    <span class="corner-mark bl" aria-hidden="true"><svg viewBox="0 0 40 40" fill="none"><path d="M4,32 L4,10 Q4,4 10,4 L32,4" stroke="currentColor" stroke-width="2"/><circle cx="4" cy="4" r="3" fill="currentColor"/></svg></span>
+    <div class="wizard-box">
+      <div class="wizard-topline">
+        <p class="eyebrow wizard-eyebrow">Agenda</p>
+        <button class="wizard-close" id="wizardClose" type="button" aria-label="Fechar agendamento">×</button>
+      </div>
+      <p class="welcome-back-hint" id="welcomeBackHint" style="display:none;"></p>
+      <div class="wizard-steps-dots">
+        <span class="active" data-dot="1"></span><span data-dot="2"></span><span data-dot="3"></span><span data-dot="4"></span><span data-dot="5"></span>
+      </div>
+
+      <div class="wizard-step active" data-step="1">
+        <h2>Antes de começar</h2>
+        <p class="hint">Seus dados pra gente já te reconhecer nas próximas vezes.</p>
+        <div class="field-group">
+          <label class="field-label" for="clienteNome">Nome</label>
+          <input class="field-input" type="text" id="clienteNome" name="clienteNome" placeholder="Seu nome" autocomplete="name" required>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="clienteTelefone">WhatsApp</label>
+          <input class="field-input" type="tel" id="clienteTelefone" name="clienteTelefone" placeholder="(15) 90000-0000" autocomplete="tel" inputmode="tel" required>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="2">
+        <h2>Quem vai te atender?</h2>
+        <p class="hint">Toque no profissional que você prefere.</p>
+        <div class="pick-list" data-group="profissional">
+          <button type="button" class="pick-card" data-value="Rafael Souza">
+            <img src="assets/img/placeholder-portrait.svg" class="tone-bw" alt="">
+            Rafael Souza — 14 anos de casa
+          </button>
+          <button type="button" class="pick-card" data-value="Carla Menezes">
+            <img src="assets/img/placeholder-portrait.svg" class="tone-bw" alt="">
+            Carla Menezes — 6 anos de casa
+          </button>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="3">
+        <h2>Qual serviço?</h2>
+        <p class="hint">Escolha uma opção.</p>
+        <div class="pick-grid" data-group="servico">
+          <button type="button" class="pick-btn" data-value="Corte">Corte</button>
+          <button type="button" class="pick-btn" data-value="Barba">Barba</button>
+          <button type="button" class="pick-btn" data-value="Corte + Barba">Corte + Barba</button>
+          <button type="button" class="pick-btn" data-value="Coloração">Coloração</button>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="4">
+        <h2>Dia e horário</h2>
+        <p class="hint">Toque no dia e depois no horário.</p>
+        <div class="day-row" data-group="dia">
+          <button type="button" class="day-btn" data-value="Ter 27/08">TER<br>27/08</button>
+          <button type="button" class="day-btn" data-value="Qua 28/08">QUA<br>28/08</button>
+          <button type="button" class="day-btn" data-value="Qui 29/08">QUI<br>29/08</button>
+          <button type="button" class="day-btn" data-value="Sex 30/08">SEX<br>30/08</button>
+          <button type="button" class="day-btn" data-value="Sáb 31/08">SÁB<br>31/08</button>
+        </div>
+        <div class="time-grid" data-group="horario">
+          <button type="button" class="time-btn" data-value="09:00">09:00</button>
+          <button type="button" class="time-btn" data-value="10:30">10:30</button>
+          <button type="button" class="time-btn" data-value="14:00">14:00</button>
+          <button type="button" class="time-btn" data-value="15:30">15:30</button>
+          <button type="button" class="time-btn" data-value="17:00">17:00</button>
+          <button type="button" class="time-btn" data-value="18:00">18:00</button>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="5">
+        <h2>Confirmar</h2>
+        <p class="hint">Confira e toque em confirmar.</p>
+        <div class="summary-box boiserie" id="summaryBox"></div>
+        <div class="whatsapp-note">📲 Ao confirmar, abrimos o WhatsApp com sua solicitação pronta pra enviar — o Rafael confirma o horário por lá.</div>
+      </div>
+
+      <div class="wizard-nav">
+        <button type="button" id="wizardBack">Voltar</button>
+        <button type="button" id="wizardNext">Continuar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/widget.js"></script>
+  <script src="assets/js/admin-store.js"></script>
+  <script src="assets/js/admin-charts.js"></script>
+  <script src="assets/js/admin-app.js"></script>
+</body>
+</html>

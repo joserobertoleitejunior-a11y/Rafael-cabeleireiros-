@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /admin.html
+Allow: /
+
+Sitemap: https://joserobertoleitejunior-a11y.github.io/rafael-cabeleireiros-/sitemap.xml

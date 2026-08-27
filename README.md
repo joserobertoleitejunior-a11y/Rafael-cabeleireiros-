@@ -1,6 +1,6 @@
 # Rafael Cabeleireiros — site
 
-Site estático (HTML/CSS/JS puro, sem build/bundler) no estilo **provençal**: branco e preto, minimalista, sem cor — hero em preto e branco, botões e textos em tons de cinza/preto sobre fundo branco. Feito pra rodar de graça no GitHub Pages — sem custo de deploy.
+Site estático (HTML/CSS/JS puro, sem build/bundler) no estilo **casarão antigo, com boiseries**: branco e preto, molduras duplas nas bordas dos cartões/fotos, ornamento de canto no hero e no menu. Feito pra rodar de graça no GitHub Pages — sem custo de deploy.
 
 ## Estrutura
 

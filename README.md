@@ -5,19 +5,22 @@ Site estático (HTML/CSS/JS puro, sem build/bundler) no estilo **casarão antigo
 ## Estrutura
 
 ```
-index.html            → landing page (hero + botão de agendar + menu hambúrguer)
-institucional.html    → sobre a casa, galeria de fotos, serviços, endereço/contato
-profissionais.html    → equipe (Rafael e Carla), com botão "agendar" pré-selecionando o profissional
-admin.html            → prévia visual do painel interno (não é funcional, é só o layout planejado)
-assets/css/styles.css → tokens de cor/fonte, header, menu hambúrguer, hero, seções, rodapé
-assets/css/widget.css → o widget de agendamento (passo a passo)
-assets/css/admin.css  → visual do admin, proposital e diferente do site do cliente
-assets/js/menu.js     → abrir/fechar o menu hambúrguer
-assets/js/widget.js   → lógica do agendamento (passo a passo + link do WhatsApp)
-robots.txt, sitemap.xml → SEO básico
+index.html               → landing page (hero + botão de agendar + menu hambúrguer)
+institucional.html       → sobre a casa, galeria de fotos, serviços, endereço/contato
+profissionais.html       → equipe (Rafael e Carla), com botão "agendar" pré-selecionando o profissional
+admin.html               → painel interno: Caixa PDV, Dashboard, Clientes, Serviços e Valores, Galeria
+assets/css/styles.css    → tokens de cor/fonte, header, menu hambúrguer, hero, seções, rodapé
+assets/css/widget.css    → o widget de agendamento (passo a passo)
+assets/css/admin.css     → visual do admin (preto + off-white + bordas finas douradas)
+assets/js/menu.js        → abrir/fechar o menu hambúrguer
+assets/js/widget.js      → lógica do agendamento (passo a passo + link do WhatsApp + reconhecimento de cliente)
+assets/js/admin-store.js → dados do painel (localStorage): vendas, serviços, equipe, clientes, galeria
+assets/js/admin-charts.js→ gráficos do dashboard (SVG simples, sem lib externa)
+assets/js/admin-app.js   → telas do painel (PDV, Dashboard, Clientes, Serviços, Galeria) e o PIN
+robots.txt, sitemap.xml  → SEO básico
 ```
 
-Todas as páginas (menos o admin) carregam o mesmo header, menu e widget de agendamento — copiados em cada HTML de propósito, pra funcionar mesmo sem servidor (abrindo o arquivo direto no navegador do celular).
+Todas as páginas do site público (menos o admin) carregam o mesmo header, menu e widget de agendamento — copiados em cada HTML de propósito, pra funcionar mesmo sem servidor (abrindo o arquivo direto no navegador do celular).
 
 ## Como agendar funciona (sem backend, sem custo)
 
@@ -43,7 +46,15 @@ Depois abra `http://localhost:8080` no navegador do celular. Servir por HTTP (em
 
 ## Editando conteúdo
 
-- **Fotos reais**: troque `assets/img/placeholder-portrait.svg` / `placeholder-square.svg` pelos arquivos de foto de verdade (ex: `assets/img/rafael.jpg`) — evite base64 embutido no HTML, deixa a página pesada e lenta pra carregar no celular. As fotos já entram em preto e branco automaticamente (classe `.provence-tone` em `styles.css`), pra combinar com o resto do site sem precisar editar cor na mão.
-- **Cores**: tudo fica em `:root` no topo do `assets/css/styles.css`.
+- **Fotos reais**: troque `assets/img/placeholder-portrait.svg` / `placeholder-square.svg` pelos arquivos de foto de verdade (ex: `assets/img/rafael.jpg`) — evite base64 embutido no HTML, deixa a página pesada e lenta pra carregar no celular. As fotos já entram em preto e branco automaticamente (classe `.tone-bw` em `styles.css`), pra combinar com o resto do site sem precisar editar cor na mão.
+- **Cores**: tudo fica em `:root` no topo do `assets/css/styles.css` (site público) e `assets/css/admin.css` (painel).
 - **Endereço/telefone**: aparecem em vários lugares (menu, rodapé, JSON-LD do `index.html`, número do WhatsApp em `assets/js/widget.js`) — procure por `99650-7174` pra achar todos.
-- **Admin**: é só prévia visual por enquanto (login e agenda de verdade ainda não existem) — quando for construir de verdade, seguir as regras de segurança do `PADROES-AGENCIA.md` (autenticação separada da área do cliente, nunca só escondida no front).
+
+## O painel (admin.html)
+
+Funcional de verdade, mas **100% no navegador** — sem servidor, sem banco de dados:
+
+- **Onde os dados ficam**: tudo salvo no `localStorage` do navegador (`rafaelAdminData`). Isso quer dizer que o painel só lembra do que foi digitado *naquele aparelho, naquele navegador*. Não sincroniza entre o celular do Rafael e um tablet no balcão, por exemplo — cada um teria sua própria cópia dos dados. Pra sincronizar de verdade entre aparelhos precisaria de um banco de dados de verdade (Supabase, Firebase etc.), o que já sai do "de graça, sem backend".
+- **A senha (PIN) não é segurança de verdade**: é uma trava simples (`localStorage` também) pra alguém não mexer se pegar o celular na mão. Qualquer pessoa com acesso ao aparelho e um pouco de curiosidade no DevTools consegue contornar. Pra autenticação de verdade (a exigida pelo `PADROES-AGENCIA.md`) precisaria de um backend.
+- **Fotos da galeria/equipe**: comprimidas no navegador antes de salvar (canvas + JPEG), mas ainda assim o `localStorage` tem limite (geralmente uns 5-10MB por site). Uma galeria com muitas fotos de alta resolução pode estourar esse limite — nesse ponto o próximo passo seria um serviço de imagens (Cloudinary, Supabase Storage) com um plano gratuito.
+- **Caixa PDV → Dashboard**: registrar uma venda no Caixa atualiza o Dashboard na hora (mesma sessão do navegador). O botão "Agendar pra depois" do Caixa abre a mesma agenda do site público.

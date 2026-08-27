@@ -1,209 +1,204 @@
-/* Camada de dados do admin — tudo salvo no localStorage do navegador.
-   Sem backend: os dados não sincronizam entre aparelhos, cada dispositivo
-   tem a própria cópia. Serve pra um único ponto de uso (o celular/tablet
-   do balcão), não pra equipe inteira acessando de lugares diferentes. */
+/* Camada de dados do admin — agora fala com o Supabase (banco de verdade).
+   Autenticação por PIN acontece 100% no banco (função login_pin), então o
+   PIN nunca é comparado no navegador — só o token de sessão que ela devolve
+   fica guardado aqui, em localStorage, pra sobreviver a um F5. */
 (function (global) {
-  var DATA_KEY = 'rafaelAdminData';
-  var PIN_KEY = 'rafaelAdminPin';
+  var SESSION_KEY = 'rafaelAdminSessao';
 
-  function uid() {
-    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  function db() {
+    if (!global.db) throw new Error('Sem conexão com o Supabase (CDN bloqueada ou offline).');
+    return global.db;
   }
 
-  function seed() {
-    return {
-      services: [
-        { id: uid(), nome: 'Corte', preco: 45 },
-        { id: uid(), nome: 'Barba', preco: 35 },
-        { id: uid(), nome: 'Corte + Barba', preco: 70 },
-        { id: uid(), nome: 'Coloração', preco: 90 }
-      ],
-      team: [
-        { id: 'rafael-souza', nome: 'Rafael Souza', especialidade: 'Fundador · Master Barber', foto: null },
-        { id: 'carla-menezes', nome: 'Carla Menezes', especialidade: 'Colorista & Tratamentos', foto: null }
-      ],
-      sales: [],
-      feedback: {},
-      gallery: []
-    };
+  function unwrap(promise) {
+    return promise.then(function (res) {
+      if (res.error) throw new Error(res.error.message || 'Erro no Supabase.');
+      return res.data;
+    });
   }
 
-  function load() {
-    var base = seed();
+  function saveSession(session) {
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch (e) { /* segue sem persistir */ }
+  }
+  function loadSession() {
     try {
-      var raw = localStorage.getItem(DATA_KEY);
-      if (!raw) {
-        save(base);
-        return base;
-      }
-      var data = JSON.parse(raw);
-      var merged = Object.assign({}, base, data);
-      merged.feedback = data.feedback || {};
-      return merged;
-    } catch (e) {
-      return base;
-    }
+      var raw = localStorage.getItem(SESSION_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+  function clearSession() {
+    try { localStorage.removeItem(SESSION_KEY); } catch (e) { /* nada a fazer */ }
   }
 
-  function save(data) {
-    try {
-      localStorage.setItem(DATA_KEY, JSON.stringify(data));
-    } catch (e) {
-      /* localStorage cheio ou indisponível — a ação em memória segue,
-         mas não persiste; quem chamou deve avisar o usuário se precisar */
-    }
-  }
-
-  function monthKey(iso) {
-    return iso.slice(0, 7); // YYYY-MM
+  // Comprime e converte um arquivo de imagem em blob JPEG, e sobe no
+  // Storage do Supabase (bucket "fotos", público). Devolve a URL pública.
+  function uploadPhoto(file, pastaPrefixo, maxDim, quality) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var img = new Image();
+        img.onload = function () {
+          var scale = Math.min(1, (maxDim || 900) / Math.max(img.width, img.height));
+          var canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(img.width * scale));
+          canvas.height = Math.max(1, Math.round(img.height * scale));
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(function (blob) {
+            if (!blob) { reject(new Error('Não deu pra processar a imagem.')); return; }
+            var nomeArquivo = (pastaPrefixo || 'foto') + '/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+            db().storage.from('fotos').upload(nomeArquivo, blob, { contentType: 'image/jpeg' })
+              .then(function (res) {
+                if (res.error) { reject(new Error(res.error.message)); return; }
+                var pub = db().storage.from('fotos').getPublicUrl(nomeArquivo);
+                resolve(pub.data.publicUrl);
+              })
+              .catch(reject);
+          }, 'image/jpeg', quality || 0.82);
+        };
+        img.onerror = function () { reject(new Error('Arquivo de imagem inválido.')); };
+        img.src = e.target.result;
+      };
+      reader.onerror = function () { reject(new Error('Não deu pra ler o arquivo.')); };
+      reader.readAsDataURL(file);
+    });
   }
 
   var Store = {
-    uid: uid,
-    getData: load,
-    setData: save,
+    // ---- sessão / autenticação ----
+    saveSession: saveSession,
+    loadSession: loadSession,
+    clearSession: clearSession,
 
-    // ---- vendas (Caixa PDV) ----
-    addSale: function (sale) {
-      var d = load();
-      sale.id = uid();
-      sale.dataISO = sale.dataISO || new Date().toISOString();
-      d.sales.push(sale);
-      save(d);
-      return sale;
-    },
-    removeSale: function (id) {
-      var d = load();
-      d.sales = d.sales.filter(function (s) { return s.id !== id; });
-      save(d);
-    },
-    getSales: function () {
-      return load().sales.slice().sort(function (a, b) { return b.dataISO.localeCompare(a.dataISO); });
-    },
-
-    // ---- serviços ----
-    addService: function (svc) {
-      var d = load();
-      svc.id = uid();
-      d.services.push(svc);
-      save(d);
-      return svc;
-    },
-    updateService: function (id, patch) {
-      var d = load();
-      var s = d.services.filter(function (x) { return x.id === id; })[0];
-      if (s) Object.assign(s, patch);
-      save(d);
-    },
-    removeService: function (id) {
-      var d = load();
-      d.services = d.services.filter(function (s) { return s.id !== id; });
-      save(d);
-    },
-
-    // ---- equipe ----
-    addTeam: function (member) {
-      var d = load();
-      member.id = uid();
-      d.team.push(member);
-      save(d);
-      return member;
-    },
-    updateTeam: function (id, patch) {
-      var d = load();
-      var m = d.team.filter(function (x) { return x.id === id; })[0];
-      if (m) Object.assign(m, patch);
-      save(d);
-    },
-    removeTeam: function (id) {
-      var d = load();
-      d.team = d.team.filter(function (t) { return t.id !== id; });
-      save(d);
-    },
-
-    // ---- feedback de cliente (por telefone) ----
-    addFeedback: function (telefone, fb) {
-      var d = load();
-      if (!d.feedback[telefone]) d.feedback[telefone] = [];
-      fb.dataISO = new Date().toISOString();
-      d.feedback[telefone].push(fb);
-      save(d);
-    },
-
-    // ---- galeria ----
-    addPhoto: function (photo) {
-      var d = load();
-      photo.id = uid();
-      photo.dataISO = new Date().toISOString();
-      d.gallery.unshift(photo);
-      save(d);
-      return photo;
-    },
-    removePhoto: function (id) {
-      var d = load();
-      d.gallery = d.gallery.filter(function (p) { return p.id !== id; });
-      save(d);
-    },
-
-    // ---- clientes: derivados do histórico de vendas ----
-    getClients: function () {
-      var d = load();
-      var map = {};
-      d.sales.forEach(function (s) {
-        if (!s.clienteTelefone) return;
-        if (!map[s.clienteTelefone]) {
-          map[s.clienteTelefone] = { telefone: s.clienteTelefone, nome: s.clienteNome || '', cortes: [] };
-        }
-        map[s.clienteTelefone].cortes.push(s);
-        if (s.clienteNome) map[s.clienteTelefone].nome = s.clienteNome;
+    login: function (pin) {
+      return unwrap(db().rpc('login_pin', { p_pin: pin })).then(function (data) {
+        var session = { token: data.token, staffId: data.staff_id, nome: data.nome, role: data.role };
+        saveSession(session);
+        return session;
       });
-      var now = new Date();
-      var thisMonth = monthKey(now.toISOString());
-      return Object.keys(map).map(function (tel) {
-        var c = map[tel];
-        c.totalCortes = c.cortes.length;
-        c.ultimaVisita = c.cortes.reduce(function (max, s) { return s.dataISO > max ? s.dataISO : max; }, c.cortes[0].dataISO);
-        c.cortesEsteMes = c.cortes.filter(function (s) { return monthKey(s.dataISO) === thisMonth; }).length;
-        c.feedback = d.feedback[tel] || [];
-        return c;
-      }).sort(function (a, b) { return b.ultimaVisita.localeCompare(a.ultimaVisita); });
+    },
+    checkSession: function (token) {
+      return unwrap(db().rpc('check_session', { p_token: token })).then(function (data) {
+        if (!data) return null;
+        return { token: token, staffId: data.staff_id, nome: data.nome, role: data.role };
+      });
+    },
+    logout: function (token) {
+      clearSession();
+      if (!token) return Promise.resolve();
+      return unwrap(db().rpc('logout_session', { p_token: token })).catch(function () { /* sessão já pode ter expirado */ });
     },
 
-    // ---- estatísticas pro dashboard ----
-    getStats: function () {
-      var d = load();
-      var now = new Date();
-      var thisMonth = monthKey(now.toISOString());
-      var salesThisMonth = d.sales.filter(function (s) { return monthKey(s.dataISO) === thisMonth; });
-      var ganhosMes = salesThisMonth.reduce(function (sum, s) { return sum + (Number(s.valor) || 0); }, 0);
-
-      var porBarbeiro = {};
-      salesThisMonth.forEach(function (s) {
-        var key = s.barbeiroNome || 'Sem profissional';
-        porBarbeiro[key] = (porBarbeiro[key] || 0) + 1;
-      });
-
-      var porDia = {};
-      salesThisMonth.forEach(function (s) {
-        var dia = s.dataISO.slice(0, 10);
-        porDia[dia] = (porDia[dia] || 0) + (Number(s.valor) || 0);
-      });
-
-      return {
-        cortesMes: salesThisMonth.length,
-        ganhosMes: ganhosMes,
-        ticketMedio: salesThisMonth.length ? ganhosMes / salesThisMonth.length : 0,
-        porBarbeiro: porBarbeiro,
-        porDia: porDia,
-        historico: d.sales.slice().sort(function (a, b) { return b.dataISO.localeCompare(a.dataISO); }).slice(0, 25)
-      };
+    // ---- equipe (leitura: qualquer logado · escrita: só dono) ----
+    listStaff: function (token) {
+      return unwrap(db().rpc('admin_list_staff', { p_token: token }));
+    },
+    addStaff: function (token, nome, especialidade, pin, role, fotoUrl) {
+      return unwrap(db().rpc('admin_add_staff', {
+        p_token: token, p_nome: nome, p_especialidade: especialidade, p_pin: pin, p_role: role || 'staff', p_foto_url: fotoUrl || null
+      }));
+    },
+    updateStaffPhoto: function (token, id, fotoUrl) {
+      return unwrap(db().rpc('admin_update_staff_photo', { p_token: token, p_id: id, p_foto_url: fotoUrl }));
+    },
+    removeStaff: function (token, id) {
+      return unwrap(db().rpc('admin_remove_staff', { p_token: token, p_id: id }));
     },
 
-    // ---- PIN (trava simples, não é autenticação de verdade — ver README) ----
-    hasPin: function () { return Boolean(localStorage.getItem(PIN_KEY)); },
-    setPin: function (pin) { localStorage.setItem(PIN_KEY, pin); },
-    checkPin: function (pin) { return localStorage.getItem(PIN_KEY) === pin; },
-    clearPin: function () { localStorage.removeItem(PIN_KEY); }
+    // ---- serviços (leitura pública · escrita: só dono) ----
+    listServices: function () {
+      return unwrap(db().from('services').select('id,nome,preco').eq('ativo', true).order('created_at'));
+    },
+    addService: function (token, nome, preco) {
+      return unwrap(db().rpc('admin_add_service', { p_token: token, p_nome: nome, p_preco: preco }));
+    },
+    updateService: function (token, id, nome, preco) {
+      return unwrap(db().rpc('admin_update_service', { p_token: token, p_id: id, p_nome: nome, p_preco: preco }));
+    },
+    removeService: function (token, id) {
+      return unwrap(db().rpc('admin_delete_service', { p_token: token, p_id: id }));
+    },
+
+    // ---- Caixa PDV (qualquer funcionário logado) ----
+    addSale: function (token, sale) {
+      return unwrap(db().rpc('pdv_add_sale', {
+        p_token: token,
+        p_staff_id: sale.staffId || null,
+        p_staff_nome: sale.staffNome || null,
+        p_service_id: sale.serviceId || null,
+        p_service_nome: sale.serviceNome,
+        p_valor: sale.valor,
+        p_pagamentos: sale.pagamentos || [],
+        p_cliente_nome: sale.clienteNome || null,
+        p_cliente_telefone: sale.clienteTelefone || null
+      }));
+    },
+
+    // ---- clientes (qualquer funcionário logado — sem valores de venda) ----
+    listClients: function (token) {
+      return unwrap(db().rpc('list_clients', { p_token: token }));
+    },
+    listClientFeedback: function (token, telefone) {
+      return unwrap(db().rpc('list_client_feedback', { p_token: token, p_telefone: telefone }));
+    },
+    addStaffFeedback: function (token, telefone, comentario) {
+      return unwrap(db().rpc('add_staff_feedback', { p_token: token, p_telefone: telefone, p_comentario: comentario }));
+    },
+
+    // ---- galeria (adicionar: qualquer logado · marcar/remover: só dono · leitura pública) ----
+    listGallery: function () {
+      return unwrap(db().from('gallery').select('id,foto_url,staff_id,created_at').order('created_at', { ascending: false }));
+    },
+    addGalleryPhoto: function (token, fotoUrl, staffId) {
+      return unwrap(db().rpc('add_gallery_photo', { p_token: token, p_foto_url: fotoUrl, p_staff_id: staffId || null }));
+    },
+    removeGalleryPhoto: function (token, id) {
+      return unwrap(db().rpc('admin_remove_gallery_photo', { p_token: token, p_id: id }));
+    },
+    tagGalleryPhoto: function (token, id, staffId) {
+      return unwrap(db().rpc('admin_tag_gallery_photo', { p_token: token, p_id: id, p_staff_id: staffId || null }));
+    },
+
+    // ---- dashboard (só dono) ----
+    dashboardStats: function (token) {
+      return unwrap(db().rpc('admin_dashboard_stats', { p_token: token }));
+    },
+
+    // ---- agenda (qualquer funcionário logado marca/desmarca — validação de
+    // horário de funcionamento e de conflito acontece no banco, via trigger) ----
+    listAppointments: function (token) {
+      return unwrap(db().rpc('admin_list_appointments', { p_token: token }));
+    },
+    updateAppointmentStatus: function (token, id, status) {
+      return unwrap(db().rpc('admin_update_appointment_status', { p_token: token, p_id: id, p_status: status }));
+    },
+    createAppointment: function (a) {
+      return unwrap(db().from('appointments').insert({
+        cliente_nome: a.clienteNome || '',
+        cliente_telefone: a.clienteTelefone || '',
+        staff_id: a.staffId || null,
+        staff_nome: a.staffNome || null,
+        servico: a.servico || null,
+        dia: a.dia,
+        dia_label: a.diaLabel || null,
+        horario: a.horario,
+        origem: 'pdv'
+      }).select().single());
+    },
+    agendaSlots: function (dia, staffId) {
+      return unwrap(db().rpc('public_agenda_slots', { p_dia: dia, p_staff_id: staffId || null }));
+    },
+
+    // ---- horário de funcionamento (leitura pública · escrita: só dono) ----
+    listBusinessHours: function () {
+      return unwrap(db().from('business_hours').select('dia_semana,abre,fecha,fechado').order('dia_semana'));
+    },
+    updateBusinessHours: function (token, diaSemana, abre, fecha, fechado) {
+      return unwrap(db().rpc('admin_update_business_hours', {
+        p_token: token, p_dia_semana: diaSemana, p_abre: abre, p_fecha: fecha, p_fechado: fechado
+      }));
+    },
+
+    uploadPhoto: uploadPhoto
   };
 
   global.RafaelAdminStore = Store;

@@ -1,13 +1,19 @@
 /* Widget de agendamento (Agenda) — passo a passo:
    1) seus dados (nome/telefone, com reconhecimento de cliente que já
    agendou antes)  2) profissional  3) serviço  4) dia/horário
-   5) confirmar (envia no WhatsApp).
+   5) confirmar (grava no Supabase + WhatsApp).
    Qualquer botão com [data-open-widget] abre o widget. Se tiver
-   data-preselect-prof="Nome", o profissional já entra escolhido. */
+   data-preselect-prof="Nome", o profissional já entra escolhido.
+
+   Profissionais, serviços e dias vêm do Supabase quando disponível;
+   se a rede/CDN não responder, cai de volta pro conteúdo fixo que já
+   está no HTML, pra nunca deixar a agenda vazia. */
 (function () {
   var WHATSAPP_NUMBER = '5515996507174';
   var STORAGE_KEY = 'rafaelClienteContato';
   var STEP_CONTATO = 1;
+  var DIAS_ABREV = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+  var HORARIOS_PADRAO = ['09:00', '10:30', '14:00', '15:30', '17:00', '18:00'];
 
   var overlay = document.getElementById('wizardOverlay');
   if (!overlay) return;
@@ -18,6 +24,10 @@
   var welcomeHint = document.getElementById('welcomeBackHint');
   var nomeInput = document.getElementById('clienteNome');
   var telefoneInput = document.getElementById('clienteTelefone');
+  var profissionalList = overlay.querySelector('[data-group="profissional"]');
+  var servicoGrid = overlay.querySelector('[data-group="servico"]');
+  var diaRow = overlay.querySelector('[data-group="dia"]');
+  var horarioGrid = overlay.querySelector('[data-group="horario"]');
   var steps = Array.prototype.slice.call(overlay.querySelectorAll('.wizard-step'));
   var dots = Array.prototype.slice.call(overlay.querySelectorAll('.wizard-steps-dots span'));
   var totalSteps = steps.length;
@@ -26,6 +36,9 @@
   var lastFocused = null;
   var lockedScrollY = 0;
   var isReturningClient = false;
+  var staffList = [];
+  var diasDisponiveis = [];
+  var diasFechados = null; // Set de dia_semana (0=domingo..6=sábado); null = ainda não carregou
 
   function loadSavedContact() {
     try {
@@ -53,8 +66,105 @@
   function unlockScroll() {
     document.body.classList.remove('scroll-locked');
     document.body.style.top = '';
-    // instantâneo — evita "piscar" pro topo antes de voltar pro scroll certo
     window.scrollTo({ top: lockedScrollY, left: 0, behavior: 'instant' });
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // -------- dados reais (Supabase), com fallback pro que já está no HTML --------
+  function carregarProfissionaisEServicos() {
+    if (!window.db) return;
+    window.db.from('staff_public').select('id,nome,especialidade,foto_url').then(function (res) {
+      if (res.error || !res.data || !res.data.length) return;
+      staffList = res.data;
+      profissionalList.innerHTML = res.data.map(function (p) {
+        return '<button type="button" class="pick-card" data-value="' + esc(p.nome) + '" data-staff-id="' + p.id + '">' +
+          (p.foto_url ? '<img src="' + esc(p.foto_url) + '" class="tone-bw" alt="">' : '<img src="assets/img/placeholder-portrait.svg" class="tone-bw" alt="">') +
+          esc(p.nome) + (p.especialidade ? ' — ' + esc(p.especialidade) : '') +
+          '</button>';
+      }).join('');
+    }).catch(function () { /* offline: mantém o HTML fixo */ });
+
+    window.db.from('services').select('id,nome,preco').eq('ativo', true).then(function (res) {
+      if (res.error || !res.data || !res.data.length) return;
+      servicoGrid.innerHTML = res.data.map(function (s) {
+        return '<button type="button" class="pick-btn" data-value="' + esc(s.nome) + '">' + esc(s.nome) + '</button>';
+      }).join('');
+    }).catch(function () { /* offline: mantém o HTML fixo */ });
+  }
+
+  // Dias que a casa fica fechada (dia_semana 0=domingo..6=sábado), pra não
+  // deixar escolher um dia sem expediente. Sem rede, cai no padrão (só
+  // domingo fechado) — o banco ainda recusa no fim das contas.
+  function carregarDiasFechados() {
+    if (!window.db) { diasFechados = new Set([0]); return Promise.resolve(); }
+    return window.db.from('business_hours').select('dia_semana,fechado').then(function (res) {
+      diasFechados = new Set((res.data || []).filter(function (r) { return r.fechado; }).map(function (r) { return r.dia_semana; }));
+      if (!diasFechados.size) diasFechados = new Set([0]);
+    }).catch(function () { diasFechados = new Set([0]); });
+  }
+
+  // Delegação de clique nos grupos — anexada uma única vez; sobrevive a
+  // innerHTML novo (fetch do Supabase, geração de dias) porque o listener
+  // fica no container, não nos botões.
+  function rewireGroup(group) {
+    group.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-value]');
+      if (!btn || btn.disabled) return;
+      selectChoice(group.getAttribute('data-group'), btn.getAttribute('data-value'));
+    });
+  }
+
+  // -------- dias reais (próximos dias com expediente, conforme o horário
+  // de funcionamento cadastrado pelo Rafael) --------
+  function gerarDiasUteis(n) {
+    var fechados = diasFechados || new Set([0]);
+    var dias = [];
+    var hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    for (var i = 1; dias.length < n; i++) {
+      var d = new Date(hoje);
+      d.setDate(hoje.getDate() + i);
+      if (!fechados.has(d.getDay())) dias.push(d);
+    }
+    return dias;
+  }
+  function isoDate(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function renderDias() {
+    diasDisponiveis = gerarDiasUteis(6);
+    diaRow.innerHTML = diasDisponiveis.map(function (d) {
+      var label = DIAS_ABREV[d.getDay()] + ' ' + String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+      return '<button type="button" class="day-btn" data-value="' + label + '" data-iso="' + isoDate(d) + '">' +
+        DIAS_ABREV[d.getDay()] + '<br>' + String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '</button>';
+    }).join('');
+    renderHorarios(HORARIOS_PADRAO.map(function (h) { return { horario: h, disponivel: true }; }));
+  }
+  function renderHorarios(slots) {
+    horarioGrid.innerHTML = slots.map(function (s) {
+      return '<button type="button" class="time-btn" data-value="' + s.horario + '"' + (s.disponivel ? '' : ' disabled style="opacity:.35;"') + '>' + s.horario + (s.disponivel ? '' : ' (cheio)') + '</button>';
+    }).join('');
+  }
+
+  // ao escolher o dia (e já com profissional escolhido), busca os horários
+  // de verdade no banco — só dentro do horário de funcionamento e sem
+  // conflito com quem já marcou (a função roda no servidor porque a
+  // tabela de agendamentos não é pública, só o resultado sim/não é).
+  function atualizarHorariosOcupados() {
+    var diaBtn = diaRow.querySelector('.day-btn.selected');
+    if (!diaBtn || !window.db) { renderHorarios(HORARIOS_PADRAO.map(function (h) { return { horario: h, disponivel: true }; })); return; }
+    var iso = diaBtn.getAttribute('data-iso');
+    var profBtn = profissionalList.querySelector('.pick-card.selected');
+    var staffId = profBtn ? profBtn.getAttribute('data-staff-id') : null;
+    window.db.rpc('public_agenda_slots', { p_dia: iso, p_staff_id: staffId || null }).then(function (res) {
+      if (res.error || !res.data) { renderHorarios(HORARIOS_PADRAO.map(function (h) { return { horario: h, disponivel: true }; })); return; }
+      renderHorarios(res.data);
+    }).catch(function () { renderHorarios(HORARIOS_PADRAO.map(function (h) { return { horario: h, disponivel: true }; })); });
   }
 
   function isStepValid(step) {
@@ -86,11 +196,11 @@
 
     if (current === totalSteps) {
       document.getElementById('summaryBox').innerHTML =
-        'Nome: <strong>' + (choices.nome || '—') + '</strong><br>' +
-        'Profissional: <strong>' + (choices.profissional || '—') + '</strong><br>' +
-        'Serviço: <strong>' + (choices.servico || '—') + '</strong><br>' +
-        'Dia: <strong>' + (choices.dia || '—') + '</strong><br>' +
-        'Horário: <strong>' + (choices.horario || '—') + '</strong>';
+        'Nome: <strong>' + esc(choices.nome || '—') + '</strong><br>' +
+        'Profissional: <strong>' + esc(choices.profissional || '—') + '</strong><br>' +
+        'Serviço: <strong>' + esc(choices.servico || '—') + '</strong><br>' +
+        'Dia: <strong>' + esc(choices.dia || '—') + '</strong><br>' +
+        'Horário: <strong>' + esc(choices.horario || '—') + '</strong>';
     }
   }
 
@@ -102,6 +212,7 @@
         b.classList.toggle('selected', b.getAttribute('data-value') === value);
       });
     }
+    if (groupName === 'profissional' || groupName === 'dia') atualizarHorariosOcupados();
     render();
   }
 
@@ -113,11 +224,18 @@
   if (nomeInput) nomeInput.addEventListener('input', function () { syncContatoFields(); render(); });
   if (telefoneInput) telefoneInput.addEventListener('input', function () { syncContatoFields(); render(); });
 
+  var dadosCarregados = false;
   function open(preselectProf) {
     lastFocused = document.activeElement;
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
     lockScroll();
+
+    if (!dadosCarregados) {
+      carregarProfissionaisEServicos();
+      carregarDiasFechados().then(renderDias);
+      dadosCarregados = true;
+    }
 
     var saved = loadSavedContact();
     isReturningClient = Boolean(saved);
@@ -159,13 +277,10 @@
     if (e.key === 'Escape') close();
   });
 
-  overlay.querySelectorAll('[data-group]').forEach(function (group) {
-    group.addEventListener('click', function (e) {
-      var btn = e.target.closest('[data-value]');
-      if (!btn) return;
-      selectChoice(group.getAttribute('data-group'), btn.getAttribute('data-value'));
-    });
-  });
+  rewireGroup(profissionalList);
+  rewireGroup(servicoGrid);
+  rewireGroup(diaRow);
+  rewireGroup(horarioGrid);
 
   backBtn.addEventListener('click', function () {
     if (current > 1) {
@@ -173,6 +288,38 @@
       render();
     }
   });
+
+  // Devolve {ok:true} quando salvou, ou {ok:false, bloqueado:true, message}
+  // quando o próprio banco recusou o horário (alguém marcou primeiro, ou
+  // caiu fora do expediente) — nesse caso não faz sentido seguir pro
+  // WhatsApp como se tivesse dado certo. Erro de rede/offline segue
+  // {ok:false, bloqueado:false} e cai no fallback (o Rafael confirma pelo
+  // WhatsApp mesmo).
+  function salvarAgendamentoNoBanco() {
+    if (!window.db) return Promise.resolve({ ok: false, bloqueado: false });
+    var diaBtn = diaRow.querySelector('.day-btn.selected');
+    var profBtn = profissionalList.querySelector('.pick-card.selected');
+    return window.db.from('appointments').insert({
+      cliente_nome: choices.nome || '',
+      cliente_telefone: choices.telefone || '',
+      staff_id: profBtn ? profBtn.getAttribute('data-staff-id') : null,
+      staff_nome: choices.profissional || null,
+      servico: choices.servico || null,
+      dia: diaBtn ? diaBtn.getAttribute('data-iso') : null,
+      dia_label: choices.dia || null,
+      horario: choices.horario || '',
+      origem: 'site'
+    }).then(function (res) {
+      if (res.error) {
+        console.error('Não deu pra salvar o agendamento no banco:', res.error.message);
+        return { ok: false, bloqueado: true, message: res.error.message };
+      }
+      return { ok: true };
+    }).catch(function (e) {
+      console.error('Agenda offline, seguindo só pelo WhatsApp:', e);
+      return { ok: false, bloqueado: false };
+    });
+  }
 
   nextBtn.addEventListener('click', function () {
     if (!isStepValid(current)) return;
@@ -188,16 +335,27 @@
       return;
     }
 
-    var msg = 'Olá! Quero agendar um horário:%0A' +
-      '• Nome: ' + encodeURIComponent(choices.nome || '') + '%0A' +
-      '• Telefone: ' + encodeURIComponent(choices.telefone || '') + '%0A' +
-      '• Profissional: ' + encodeURIComponent(choices.profissional || '') + '%0A' +
-      '• Serviço: ' + encodeURIComponent(choices.servico || '') + '%0A' +
-      '• Dia: ' + encodeURIComponent(choices.dia || '') + '%0A' +
-      '• Horário: ' + encodeURIComponent(choices.horario || '');
-    var url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + msg;
-    window.open(url, '_blank', 'noopener');
-    close();
+    nextBtn.disabled = true;
+    salvarAgendamentoNoBanco().then(function (resultado) {
+      if (resultado && resultado.bloqueado) {
+        nextBtn.disabled = false;
+        alert('Esse horário acabou de ficar indisponível: ' + resultado.message + ' Escolha outro horário.');
+        current = 4;
+        render();
+        atualizarHorariosOcupados();
+        return;
+      }
+      var msg = 'Olá! Quero agendar um horário:%0A' +
+        '• Nome: ' + encodeURIComponent(choices.nome || '') + '%0A' +
+        '• Telefone: ' + encodeURIComponent(choices.telefone || '') + '%0A' +
+        '• Profissional: ' + encodeURIComponent(choices.profissional || '') + '%0A' +
+        '• Serviço: ' + encodeURIComponent(choices.servico || '') + '%0A' +
+        '• Dia: ' + encodeURIComponent(choices.dia || '') + '%0A' +
+        '• Horário: ' + encodeURIComponent(choices.horario || '');
+      var url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + msg;
+      window.open(url, '_blank', 'noopener');
+      close();
+    });
   });
 
   // Abre o widget a partir de qualquer botão marcado com data-open-widget.

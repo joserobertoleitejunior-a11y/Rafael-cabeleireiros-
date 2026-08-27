@@ -18,6 +18,21 @@
   var current = 1;
   var choices = {};
   var lastFocused = null;
+  var lockedScrollY = 0;
+
+  // Mesma trava de scroll do menu.js — overflow:hidden no body não
+  // basta no iOS Safari, precisa fixar a posição e devolver ao fechar.
+  function lockScroll() {
+    lockedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.style.top = '-' + lockedScrollY + 'px';
+    document.body.classList.add('scroll-locked');
+  }
+  function unlockScroll() {
+    document.body.classList.remove('scroll-locked');
+    document.body.style.top = '';
+    // instantâneo — evita "piscar" pro topo antes de voltar pro scroll certo
+    window.scrollTo({ top: lockedScrollY, left: 0, behavior: 'instant' });
+  }
 
   function isStepValid(step) {
     var group = steps[step - 1].querySelector('[data-group]');
@@ -63,7 +78,7 @@
     lastFocused = document.activeElement;
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
+    lockScroll();
     current = startStep || 1;
     render();
     if (closeBtn) closeBtn.focus();
@@ -72,7 +87,7 @@
   function close() {
     overlay.classList.remove('open');
     overlay.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
+    unlockScroll();
     current = 1;
     choices = {};
     overlay.querySelectorAll('.selected').forEach(function (b) {

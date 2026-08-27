@@ -6,13 +6,30 @@
   if (!openBtn || !menu) return;
 
   var lastFocused = null;
+  var lockedScrollY = 0;
+
+  // Trava o scroll do fundo. overflow:hidden sozinho não segura o iOS
+  // Safari (a página ainda "arrasta" por baixo do overlay) — por isso
+  // fixamos o body na posição atual e devolvemos o scroll ao fechar.
+  function lockScroll() {
+    lockedScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.style.top = '-' + lockedScrollY + 'px';
+    document.body.classList.add('scroll-locked');
+  }
+  function unlockScroll() {
+    document.body.classList.remove('scroll-locked');
+    document.body.style.top = '';
+    // scrollTo instantâneo — sem isso o scroll-behavior:smooth global anima
+    // a volta e o usuário vê a página "piscar" pro topo antes de descer de novo.
+    window.scrollTo({ top: lockedScrollY, left: 0, behavior: 'instant' });
+  }
 
   function openMenu() {
     lastFocused = document.activeElement;
     menu.classList.add('open');
     menu.setAttribute('aria-hidden', 'false');
     openBtn.setAttribute('aria-expanded', 'true');
-    document.body.style.overflow = 'hidden';
+    lockScroll();
     if (closeBtn) closeBtn.focus();
   }
 
@@ -20,7 +37,7 @@
     menu.classList.remove('open');
     menu.setAttribute('aria-hidden', 'true');
     openBtn.setAttribute('aria-expanded', 'false');
-    document.body.style.overflow = '';
+    unlockScroll();
     if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
   }
 

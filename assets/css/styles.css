@@ -101,6 +101,7 @@ body.scroll-locked{position:fixed; left:0; right:0; overflow:hidden;}
   box-shadow:0 14px 30px -14px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.09);
 }
 .btn:hover, .btn:focus-visible{background-color:var(--terracotta-deep); background-image:var(--gloss-hover); transform:translateY(-2px);}
+.btn:active{transform:scale(0.96); transition:transform 0.1s ease;}
 .btn-ghost{
   background:transparent;
   color:var(--ink);
@@ -108,6 +109,7 @@ body.scroll-locked{position:fixed; left:0; right:0; overflow:hidden;}
   box-shadow:none;
 }
 .btn-ghost:hover, .btn-ghost:focus-visible{background:var(--ink); color:var(--linen);}
+.btn-ghost:active{transform:scale(0.96); transition:transform 0.1s ease;}
 .btn-outline-light{
   background:transparent; color:var(--white); border:1.5px solid rgba(255,255,255,0.75); box-shadow:none;
 }
@@ -170,6 +172,7 @@ body.scroll-locked{position:fixed; left:0; right:0; overflow:hidden;}
 }
 .site-topbar.on-hero .hamburger{border-color:rgba(255,255,255,0.5);}
 .hamburger span{width:18px; height:2px; background:var(--ink); border-radius:2px; transition:transform 0.25s, opacity 0.25s;}
+.hamburger:active{transform:scale(0.9); transition:transform 0.1s ease;}
 
 /* ---------- Menu hambúrguer (overlay em tela cheia) ---------- */
 .site-menu{
@@ -196,6 +199,8 @@ body.scroll-locked{position:fixed; left:0; right:0; overflow:hidden;}
   border:1.5px solid rgba(255,255,255,0.4); background:transparent;
   color:var(--linen); font-size:1.5rem; line-height:1; cursor:pointer;
 }
+.site-menu-close:active{transform:scale(0.9); transition:transform 0.1s ease;}
+.site-menu-list a:active, .site-menu-list button:active{opacity:0.55;}
 .site-menu-list{margin-top:2.2rem; display:flex; flex-direction:column;}
 .site-menu-list li{border-bottom:1px solid rgba(255,255,255,0.14);}
 .site-menu-list a, .site-menu-list button{

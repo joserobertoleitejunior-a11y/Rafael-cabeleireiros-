@@ -131,11 +131,25 @@
         <p class="eyebrow wizard-eyebrow">Agenda</p>
         <button class="wizard-close" id="wizardClose" type="button" aria-label="Fechar agendamento">×</button>
       </div>
+      <p class="welcome-back-hint" id="welcomeBackHint" style="display:none;"></p>
       <div class="wizard-steps-dots">
-        <span class="active" data-dot="1"></span><span data-dot="2"></span><span data-dot="3"></span><span data-dot="4"></span>
+        <span class="active" data-dot="1"></span><span data-dot="2"></span><span data-dot="3"></span><span data-dot="4"></span><span data-dot="5"></span>
       </div>
 
       <div class="wizard-step active" data-step="1">
+        <h2>Antes de começar</h2>
+        <p class="hint">Seus dados pra gente já te reconhecer nas próximas vezes.</p>
+        <div class="field-group">
+          <label class="field-label" for="clienteNome">Nome</label>
+          <input class="field-input" type="text" id="clienteNome" name="clienteNome" placeholder="Seu nome" autocomplete="name" required>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="clienteTelefone">WhatsApp</label>
+          <input class="field-input" type="tel" id="clienteTelefone" name="clienteTelefone" placeholder="(15) 90000-0000" autocomplete="tel" inputmode="tel" required>
+        </div>
+      </div>
+
+      <div class="wizard-step" data-step="2">
         <h2>Quem vai te atender?</h2>
         <p class="hint">Toque no profissional que você prefere.</p>
         <div class="pick-list" data-group="profissional">
@@ -150,7 +164,7 @@
         </div>
       </div>
 
-      <div class="wizard-step" data-step="2">
+      <div class="wizard-step" data-step="3">
         <h2>Qual serviço?</h2>
         <p class="hint">Escolha uma opção.</p>
         <div class="pick-grid" data-group="servico">
@@ -161,7 +175,7 @@
         </div>
       </div>
 
-      <div class="wizard-step" data-step="3">
+      <div class="wizard-step" data-step="4">
         <h2>Dia e horário</h2>
         <p class="hint">Toque no dia e depois no horário.</p>
         <div class="day-row" data-group="dia">
@@ -181,7 +195,7 @@
         </div>
       </div>
 
-      <div class="wizard-step" data-step="4">
+      <div class="wizard-step" data-step="5">
         <h2>Confirmar</h2>
         <p class="hint">Confira e toque em confirmar.</p>
         <div class="summary-box boiserie" id="summaryBox"></div>

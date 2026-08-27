@@ -19,19 +19,20 @@
 <link rel="stylesheet" href="assets/css/styles.css">
 <link rel="stylesheet" href="assets/css/widget.css">
 <link rel="stylesheet" href="assets/css/admin.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="admin-page">
 
-  <!-- Trava simples por PIN (fica só neste navegador — não é autenticação real) -->
+  <!-- Login por PIN — verificado no banco (Supabase), o PIN nunca é comparado no navegador -->
   <div class="admin-pin-screen" id="pinScreen">
     <div class="admin-pin-box">
       <span class="brand-mark">❧</span>
       <h1 id="pinTitle">Painel Rafael Cabeleireiros</h1>
-      <p id="pinSubtitle">Digite a senha pra entrar.</p>
+      <p id="pinSubtitle">Digite seu PIN pra entrar.</p>
       <input class="admin-pin-input" id="pinInput" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off" placeholder="••••">
       <button class="adm-btn adm-btn-block" id="pinSubmit" type="button" style="margin-top:1rem;">Entrar</button>
       <p class="admin-pin-error" id="pinError"></p>
-      <p class="admin-pin-hint">Essa senha fica salva só neste aparelho/navegador — é uma trava simples pra quem passar na frente da tela não mexer, não é um login de verdade (sem servidor, não dá pra ter isso de graça).</p>
+      <p class="admin-pin-hint">Cada pessoa da equipe tem o próprio PIN — o dono cadastra em Serviços e Valores. O PIN é conferido no banco, nunca no navegador.</p>
     </div>
   </div>
 
@@ -43,6 +44,7 @@
 
     <nav class="admin-tabs" role="tablist">
       <button class="admin-tab active" type="button" data-view="pdv">Caixa PDV</button>
+      <button class="admin-tab" type="button" data-view="agenda">Agenda</button>
       <button class="admin-tab" type="button" data-view="dashboard">Dashboard</button>
       <button class="admin-tab" type="button" data-view="clientes">Clientes</button>
       <button class="admin-tab" type="button" data-view="servicos">Serviços e Valores</button>
@@ -50,6 +52,7 @@
     </nav>
 
     <section class="admin-view active" id="view-pdv"></section>
+    <section class="admin-view" id="view-agenda"></section>
     <section class="admin-view" id="view-dashboard"></section>
     <section class="admin-view" id="view-clientes"></section>
     <section class="admin-view" id="view-servicos"></section>
@@ -149,6 +152,7 @@
     </div>
   </div>
 
+  <script src="assets/js/supabase-client.js"></script>
   <script src="assets/js/widget.js"></script>
   <script src="assets/js/admin-store.js"></script>
   <script src="assets/js/admin-charts.js"></script>

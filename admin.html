@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin (prévia) — Rafael Cabeleireiros</title>
+<meta name="description" content="Prévia visual do painel interno do Rafael Cabeleireiros — gestão de funcionários, agenda e serviços.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#F4F4F1">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23141414'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle' fill='%23FFFFFF'%3E%23%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+<link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body class="admin-page">
+
+  <div class="admin-banner">Área interna · <strong>prévia de visual</strong> — ainda não é funcional, é só o layout planejado pro Rafael.</div>
+
+  <header class="admin-topbar">
+    <span class="brand"><span class="dot"></span> RAFAEL · PAINEL</span>
+    <a class="admin-back" href="index.html" style="text-decoration:none; display:inline-flex; align-items:center;">← Voltar ao site</a>
+  </header>
+
+  <section class="admin-hero">
+    <p class="eyebrow">Painel interno</p>
+    <h1>Um estilo à parte pra equipe</h1>
+    <p>O site do cliente é branco e preto, provençal, clean. O painel de gestão é o oposto de propósito: cru, tipo terminal, sem enfeite — pra Rafael achar tudo rápido no meio de um corte.</p>
+  </section>
+
+  <section class="admin-mock-wrap">
+    <div class="admin-mock">
+      <div class="admin-mock-bar">
+        <div class="brand"><span class="dot"></span> RAFAEL · PAINEL</div>
+        <nav><span class="active">Funcionários</span><span>Agenda</span><span>Serviços</span></nav>
+      </div>
+      <div class="admin-mock-body">
+        <div class="admin-mock-panel">
+          <h4>Novo funcionário</h4>
+          <div class="admin-field"><span class="ph">Nome</span><span>Carla Menezes</span></div>
+          <div class="admin-row-mini">
+            <div class="admin-field"><span class="ph">Anos</span><span>6</span></div>
+            <div class="admin-field"><span class="ph">Especialidade</span><span>Coloração</span></div>
+          </div>
+          <div class="admin-field"><span class="ph">Foto</span><span>upload.jpg</span></div>
+          <span class="admin-btn-mock">Salvar funcionário</span>
+        </div>
+        <div class="admin-mock-panel">
+          <h4>Equipe atual</h4>
+          <div class="admin-staff-item"><img class="admin-avatar" src="assets/img/placeholder-portrait.svg" alt=""> Rafael Souza — 14 anos</div>
+          <div class="admin-staff-item"><img class="admin-avatar" src="assets/img/placeholder-portrait.svg" alt=""> Carla Menezes — 6 anos</div>
+          <div class="admin-staff-item"><span class="admin-avatar" style="display:inline-block;"></span> + adicionar próximo</div>
+        </div>
+      </div>
+    </div>
+
+    <ul class="admin-note-list">
+      <li>Próximo passo real: autenticação separada da área do cliente (login da equipe, não é a mesma senha do site).</li>
+      <li>Agenda do painel puxaria os mesmos horários do widget público — sem duplicar cadastro.</li>
+      <li>Enquanto não há backend, os agendamentos chegam direto no WhatsApp do Rafael.</li>
+    </ul>
+  </section>
+
+</body>
+</html>

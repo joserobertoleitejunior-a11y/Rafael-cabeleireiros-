@@ -1,0 +1,95 @@
+/* ==========================================================================
+   Widget de agendamento (Agenda) — overlay em passo a passo
+   Usa os tokens definidos em styles.css
+   ========================================================================== */
+
+.wizard-overlay{
+  position:fixed; inset:0; z-index:120;
+  background:var(--linen);
+  display:none;
+  overflow-y:auto;
+}
+.wizard-overlay.open{display:block;}
+.wizard-box{max-width:640px; margin:0 auto; padding:1.4rem 6vw 4rem; min-height:100%;}
+
+.wizard-topline{
+  display:flex; align-items:center; justify-content:space-between;
+  padding-top:0.6rem;
+}
+.wizard-eyebrow{color:var(--terracotta-deep);}
+.wizard-close{
+  width:50px; height:50px; border-radius:50%;
+  border:1.5px solid var(--stone); background:var(--white);
+  font-size:1.5rem; line-height:1; cursor:pointer; color:var(--ink);
+}
+.wizard-close:hover, .wizard-close:focus-visible{border-color:var(--terracotta); color:var(--terracotta-deep);}
+
+.wizard-steps-dots{display:flex; gap:0.6rem; justify-content:center; margin:1.6rem 0 2.4rem;}
+.wizard-steps-dots span{width:10px; height:10px; border-radius:50%; border:1.5px solid var(--line-accent); background:transparent;}
+.wizard-steps-dots span.active{background:var(--terracotta); border-color:var(--terracotta);}
+.wizard-steps-dots span.done{background:var(--line-accent); border-color:var(--line-accent);}
+
+.wizard-step{display:none;}
+.wizard-step.active{display:block; animation:wizardFade 0.35s ease;}
+@keyframes wizardFade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;}}
+.wizard-step h2{font-size:1.9rem;}
+.wizard-step > p.hint{font-size:1rem; color:var(--ink-soft); margin-top:0.5rem; margin-bottom:1.8rem;}
+
+.pick-list{display:flex; flex-direction:column; gap:0.9rem;}
+.pick-card{
+  display:flex; align-items:center; gap:1rem;
+  padding:1rem 1.1rem; border:1.5px solid var(--stone); border-radius:var(--radius);
+  background:var(--white); cursor:pointer; text-align:left; font-family:inherit;
+  font-size:1.08rem; color:var(--ink);
+  transition:border-color 0.2s, background 0.2s;
+}
+.pick-card img{width:52px; height:52px; border-radius:50%; object-fit:cover; flex-shrink:0;}
+.pick-card:hover{border-color:var(--lavender);}
+.pick-card.selected{border-color:var(--terracotta); background:var(--lavender-pale);}
+
+.pick-grid{display:grid; grid-template-columns:1fr 1fr; gap:0.9rem;}
+.pick-btn{
+  padding:1.2rem 1rem; border:1.5px solid var(--stone); border-radius:var(--radius); background:var(--white);
+  font-family:inherit; font-size:1.05rem; cursor:pointer; color:var(--ink);
+  transition:border-color 0.2s, background 0.2s;
+}
+.pick-btn:hover{border-color:var(--lavender);}
+.pick-btn.selected{border-color:var(--terracotta); background:var(--lavender-pale);}
+
+.day-row{display:flex; gap:0.6rem; overflow-x:auto; padding-bottom:0.5rem; margin-bottom:1.6rem;}
+.day-btn{
+  flex:0 0 auto; padding:0.85rem 0.95rem; border:1.5px solid var(--stone); border-radius:10px; background:var(--white);
+  font-family:inherit; font-size:0.95rem; cursor:pointer; text-align:center; min-width:74px;
+}
+.day-btn.selected{border-color:var(--terracotta); background:var(--lavender-pale);}
+.time-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:0.7rem;}
+.time-btn{padding:0.95rem 0.5rem; border:1.5px solid var(--stone); border-radius:10px; background:var(--white); font-family:inherit; font-size:1rem; cursor:pointer;}
+.time-btn.selected{border-color:var(--terracotta); background:var(--lavender-pale);}
+
+.summary-box{
+  background:var(--white); border:1.5px solid var(--line-accent); border-radius:var(--radius);
+  padding:1.3rem 1.4rem; font-size:1.05rem; line-height:1.95; margin-bottom:1.6rem;
+}
+.summary-box strong{color:var(--terracotta-deep);}
+
+.wizard-nav{display:flex; gap:0.9rem; margin-top:2rem;}
+.wizard-nav button{
+  flex:1; padding:1.05rem; font-size:1rem;
+  letter-spacing:0.01em; cursor:pointer; border-radius:999px; font-weight:500;
+}
+#wizardBack{background:transparent; border:1.5px solid var(--ink); color:var(--ink);}
+#wizardBack:disabled{opacity:0.35; cursor:default;}
+#wizardNext{background:var(--terracotta); border:1.5px solid transparent; color:var(--white);}
+#wizardNext:hover{background:var(--terracotta-deep);}
+#wizardNext:disabled{opacity:0.45; cursor:default; background:var(--ink-soft);}
+
+.whatsapp-note{
+  display:flex; gap:0.6rem; align-items:flex-start;
+  margin-top:1.2rem; padding:1rem 1.1rem; background:var(--linen-deep);
+  border-radius:10px; font-size:0.88rem; color:var(--ink-soft); line-height:1.55;
+}
+
+@media (max-width:480px){
+  .pick-grid{grid-template-columns:1fr;}
+  .time-grid{grid-template-columns:repeat(2,1fr);}
+}

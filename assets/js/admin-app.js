@@ -370,15 +370,17 @@
     clientes.forEach(function (c) {
       var ultimoFeedback = c.feedback.length ? c.feedback[c.feedback.length - 1] : null;
       html += '<div class="adm-client-card">' +
+        '<div class="adm-client-head">' +
         '<div><div class="adm-client-name">' + esc(c.nome || 'Sem nome') + '</div><div class="adm-client-phone">' + esc(c.telefone) + '</div></div>' +
+        '<a class="adm-whatsapp-btn" target="_blank" rel="noopener" href="' + waLink(c.telefone) + '" aria-label="Abrir WhatsApp com ' + esc(c.nome || c.telefone) + '">' + WHATSAPP_ICON + '</a>' +
+        '</div>' +
         '<div class="adm-client-stats">' +
         '<div><strong>' + c.totalCortes + '</strong><span>Total de cortes</span></div>' +
         '<div><strong>' + c.cortesEsteMes + '</strong><span>Este mês</span></div>' +
         '</div>' +
-        (ultimoFeedback ? '<p class="adm-client-feedback">"' + esc(ultimoFeedback.comentario) + '"</p>' : '') +
-        '<a class="adm-whatsapp-btn" target="_blank" rel="noopener" href="' + waLink(c.telefone) + '">' + WHATSAPP_ICON + ' Abrir WhatsApp</a>' +
+        (ultimoFeedback ? '<p class="adm-client-feedback">"' + esc(ultimoFeedback.comentario) + '"</p>' : '<p class="adm-client-feedback-empty">Sem feedback do cliente ainda.</p>') +
         '<form class="adm-feedback-form" data-telefone="' + esc(c.telefone) + '">' +
-        '<input type="text" placeholder="Anotar feedback do cliente…" required>' +
+        '<input type="text" placeholder="Anotar feedback (opcional)">' +
         '<button type="submit" class="adm-btn adm-btn-sm">+</button>' +
         '</form>' +
         '</div>';
@@ -530,12 +532,12 @@
     } else {
       data.gallery.forEach(function (p) {
         var barbeiro = data.team.filter(function (t) { return t.id === p.barbeiroId; })[0];
-        html += '<div class="adm-gallery-item"><img src="' + p.foto + '" alt="">' +
+        html += '<div class="adm-gallery-item"><div class="adm-gallery-item-inner"><img src="' + p.foto + '" alt="">' +
           '<button type="button" class="adm-gallery-remove" data-remove-photo="' + p.id + '">×</button>' +
           '<select class="adm-gallery-tag-select" data-tag-photo="' + p.id + '" style="position:absolute; left:4px; bottom:4px; max-width:80%;">' +
           '<option value="">Sem marcação</option>' +
           data.team.map(function (t) { return '<option value="' + t.id + '"' + (t.id === p.barbeiroId ? ' selected' : '') + '>' + esc(t.nome) + '</option>'; }).join('') +
-          '</select></div>';
+          '</select></div></div>';
       });
     }
     html += '</div></div>';

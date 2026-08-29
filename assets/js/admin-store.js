@@ -106,13 +106,13 @@
 
     // ---- serviços (leitura pública · escrita: só dono) ----
     listServices: function () {
-      return unwrap(db().from('services').select('id,nome,preco').eq('ativo', true).order('created_at'));
+      return unwrap(db().from('services').select('id,nome,preco,categoria').eq('ativo', true).order('created_at'));
     },
-    addService: function (token, nome, preco) {
-      return unwrap(db().rpc('admin_add_service', { p_token: token, p_nome: nome, p_preco: preco }));
+    addService: function (token, nome, preco, categoria) {
+      return unwrap(db().rpc('admin_add_service', { p_token: token, p_nome: nome, p_preco: preco, p_categoria: categoria || 'unissex' }));
     },
-    updateService: function (token, id, nome, preco) {
-      return unwrap(db().rpc('admin_update_service', { p_token: token, p_id: id, p_nome: nome, p_preco: preco }));
+    updateService: function (token, id, nome, preco, categoria) {
+      return unwrap(db().rpc('admin_update_service', { p_token: token, p_id: id, p_nome: nome, p_preco: preco, p_categoria: categoria || null }));
     },
     removeService: function (token, id) {
       return unwrap(db().rpc('admin_delete_service', { p_token: token, p_id: id }));

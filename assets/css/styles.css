@@ -146,12 +146,16 @@ body.scroll-locked{position:fixed; left:0; right:0; overflow:hidden;}
   backdrop-filter:blur(10px);
   border-bottom:1px solid var(--stone);
 }
+/* header "flutuando" sobre o hero (não empurra o hero pra baixo, fica por
+   cima) — o nome da marca fica em cima da própria foto, não numa barra
+   separada. Texto continua escuro (funciona nos dois lados: sobre o
+   painel claro do texto E sobre a foto, que ganha um leve clarão no topo
+   só onde o header fica — ver .hero-split-photo::before). */
 .site-topbar.on-hero{
   position:absolute; inset:0 0 auto 0;
-  background:transparent; border-bottom:1px solid rgba(255,255,255,0.22);
+  background:transparent; border-bottom:none;
 }
-.site-topbar.on-hero .brand{color:var(--white);}
-.site-topbar.on-hero .hamburger span{background:var(--white);}
+.site-topbar.on-hero .hamburger{border-color:rgba(10,8,4,0.3);}
 
 .brand{
   display:inline-flex; align-items:center; gap:0.55rem;
@@ -159,9 +163,9 @@ body.scroll-locked{position:fixed; left:0; right:0; overflow:hidden;}
   font-size:1.35rem; font-weight:600; color:var(--ink);
 }
 .brand em{font-style:normal; color:var(--terracotta-deep);}
-.site-topbar.on-hero .brand em{color:var(--line-accent-dark);}
+.site-topbar.on-hero .brand em{color:#B08D2F;}
 .brand-mark{font-size:1.1rem; color:var(--line-accent);}
-.site-topbar.on-hero .brand-mark{color:var(--line-accent-dark);}
+.site-topbar.on-hero .brand-mark{color:#C9A227;}
 
 .hamburger{
   position:relative;
@@ -170,7 +174,6 @@ body.scroll-locked{position:fixed; left:0; right:0; overflow:hidden;}
   background:transparent; border:1.5px solid var(--stone); border-radius:50%;
   cursor:pointer;
 }
-.site-topbar.on-hero .hamburger{border-color:rgba(255,255,255,0.5);}
 .hamburger span{width:18px; height:2px; background:var(--ink); border-radius:2px; transition:transform 0.25s, opacity 0.25s;}
 .hamburger:active{transform:scale(0.9); transition:transform 0.1s ease;}
 
@@ -243,7 +246,7 @@ body.scroll-locked{position:fixed; left:0; right:0; overflow:hidden;}
 .hero-split-copy{
   position:relative; z-index:3;
   display:flex; flex-direction:column; justify-content:center;
-  padding:6.5rem 4vw 3rem 6vw;
+  padding:5.6rem 4vw 3rem 6vw;
 }
 .hero-split-copy h1{margin-top:0.8rem; font-size:clamp(2.4rem,6vw,3.8rem); text-wrap:balance;}
 .hero-split-copy p{margin-top:1.1rem; max-width:42ch; font-size:1.02rem; color:var(--ink-soft);}
@@ -251,12 +254,19 @@ body.scroll-locked{position:fixed; left:0; right:0; overflow:hidden;}
   position:relative;
   background-size:cover; background-position:center 18%;
 }
+/* clarão sutil só no topo da foto — o suficiente pra ler o header em cima,
+   sem lavar a foto inteira nem precisar de duas cores de texto */
+.hero-split-photo::before{
+  content:''; position:absolute; inset:0 0 auto 0; height:110px;
+  background:linear-gradient(180deg, rgba(255,250,244,0.6), transparent);
+  pointer-events:none;
+}
 .hero-split .hero-cta{margin-top:2.2rem;}
 
 @media (max-width:900px){
   .hero-split{grid-template-columns:1fr; min-height:auto;}
-  .hero-split-photo{min-height:62vh; order:-1; background-position:center 22%;}
-  .hero-split-copy{padding:2.2rem 6vw 2.6rem;}
+  .hero-split-photo{min-height:78vh; order:-1; background-position:center 22%;}
+  .hero-split-copy{padding:1.6rem 6vw 2.6rem;}
 }
 
 /* ---------- Fita de serviços (selos com ícone, embaixo do hero) ---------- */
@@ -272,6 +282,28 @@ body.scroll-locked{position:fixed; left:0; right:0; overflow:hidden;}
 .service-badge .mark svg{width:26px; height:26px;}
 .service-badge strong{font-size:0.78rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink);}
 .service-badge span{display:block; font-size:0.7rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-soft); margin-top:0.15rem;}
+
+/* ---------- Prévia da equipe (página institucional) ---------- */
+.team-preview-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.6rem;}
+.team-preview-card{
+  background:var(--white); border:1px solid var(--stone); border-radius:var(--radius);
+  padding:1.8rem 1.4rem; text-align:center;
+}
+.team-preview-card img{width:88px; height:88px; border-radius:50%; object-fit:cover; margin:0 auto;}
+.team-preview-card h3{margin-top:1rem; font-size:1.3rem;}
+.team-preview-card .eyebrow{justify-content:center; width:100%; margin-top:0.3rem; font-size:0.68rem;}
+.team-preview-card .btn{margin-top:1.2rem;}
+
+/* ---------- Convite pro Instagram ---------- */
+.instagram-banner{
+  display:flex; align-items:center; justify-content:space-between; gap:1.6rem; flex-wrap:wrap;
+  background:var(--white); border:1px solid var(--stone); border-radius:var(--radius); padding:2.2rem 2.4rem;
+}
+.instagram-banner .btn{flex-shrink:0; display:inline-flex; align-items:center; gap:0.6rem;}
+.instagram-banner .btn svg{width:20px; height:20px;}
+@media (max-width:600px){
+  .instagram-banner{flex-direction:column; text-align:center;}
+}
 
 .hero-foot-strip{
   position:relative; z-index:2;
@@ -436,8 +468,7 @@ footer.site-footer .foot-col{display:flex; flex-direction:column; gap:0.35rem; m
   white-space:nowrap;
 }
 .gender-switch:hover, .gender-switch:focus-visible{border-color:#C9A227; color:#B08D2F;}
-.site-topbar.on-hero .gender-switch{border-color:rgba(255,255,255,0.5); color:var(--white);}
-.site-topbar.on-hero .gender-switch:hover{border-color:#C9A227; color:#C9A227;}
+.site-topbar.on-hero .gender-switch{border-color:rgba(10,8,4,0.3);}
 
 .gender-gate{
   position:fixed; inset:0; z-index:200;

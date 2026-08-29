@@ -553,8 +553,10 @@
     var html = '<div class="admin-view-head"><p class="eyebrow">Gestão</p><h2>Serviços e Valores</h2><p>Preços da casa e quem faz parte da equipe.</p></div>';
 
     html += '<div class="adm-panel"><h3 style="margin-bottom:0.6rem;font-size:1.15rem;">Serviços</h3>';
+    var CATEGORIA_LABEL = { masculino: 'Masculino', feminino: 'Feminino', unissex: 'Unissex' };
     services.forEach(function (s) {
-      html += '<div class="adm-service-row"><span class="adm-service-name">' + esc(s.nome) + '</span>' +
+      html += '<div class="adm-service-row"><span class="adm-service-name">' + esc(s.nome) +
+        ' <span style="color:var(--adm-text-faint); font-size:0.72rem;">· ' + (CATEGORIA_LABEL[s.categoria] || 'Unissex') + '</span></span>' +
         '<span class="adm-service-price">' + fmtBRL(s.preco) + '</span>' +
         '<button type="button" class="adm-btn adm-btn-ghost adm-btn-sm" data-edit-service="' + s.id + '">Editar</button>' +
         '<button type="button" class="adm-btn adm-btn-danger adm-btn-sm" data-remove-service="' + s.id + '">Remover</button></div>';
@@ -624,12 +626,18 @@
       '<div class="adm-modal-head"><h3>' + (service ? 'Editar serviço' : 'Novo serviço') + '</h3><button type="button" class="adm-modal-close" id="modalCloseBtn">×</button></div>' +
       '<div class="adm-field"><label>Nome</label><input id="svcNome" type="text" value="' + (service ? esc(service.nome) : '') + '"></div>' +
       '<div class="adm-field"><label>Preço (R$)</label><input id="svcPreco" type="number" step="0.01" min="0" value="' + (service ? service.preco : '') + '"></div>' +
+      '<div class="adm-field"><label>Aparece na agenda de</label><select id="svcCategoria">' +
+      '<option value="unissex"' + (!service || service.categoria === 'unissex' ? ' selected' : '') + '>Unissex (as duas)</option>' +
+      '<option value="masculino"' + (service && service.categoria === 'masculino' ? ' selected' : '') + '>Só masculino</option>' +
+      '<option value="feminino"' + (service && service.categoria === 'feminino' ? ' selected' : '') + '>Só feminino</option>' +
+      '</select></div>' +
       '<button type="button" class="adm-btn adm-btn-block" id="svcSalvar">Salvar</button>';
     wrap.querySelector('#svcSalvar').addEventListener('click', function () {
       var nome = wrap.querySelector('#svcNome').value.trim();
       var preco = parseFloat(wrap.querySelector('#svcPreco').value) || 0;
+      var categoria = wrap.querySelector('#svcCategoria').value;
       if (!nome) return;
-      var acao = service ? Store.updateService(session.token, service.id, nome, preco) : Store.addService(session.token, nome, preco);
+      var acao = service ? Store.updateService(session.token, service.id, nome, preco, categoria) : Store.addService(session.token, nome, preco, categoria);
       acao.then(function () { closeModal(); renderServicos(); }).catch(function (e) { alert(e.message); });
     });
     return wrap;

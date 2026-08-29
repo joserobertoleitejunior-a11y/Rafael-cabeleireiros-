@@ -89,9 +89,15 @@
       }).join('');
     }).catch(function () { /* offline: mantém o HTML fixo */ });
 
-    window.db.from('services').select('id,nome,preco').eq('ativo', true).then(function (res) {
+    // A trilha da página (masculino/feminino, ver body[data-genero]) filtra
+    // o que aparece pra agendar — serviço "unissex" (ex: Coloração) aparece
+    // nas duas. Sem trilha marcada (ex: o Caixa PDV do painel), mostra tudo.
+    var genero = document.body.getAttribute('data-genero');
+    window.db.from('services').select('id,nome,preco,categoria').eq('ativo', true).then(function (res) {
       if (res.error || !res.data || !res.data.length) return;
-      servicoGrid.innerHTML = res.data.map(function (s) {
+      var lista = genero ? res.data.filter(function (s) { return s.categoria === genero || s.categoria === 'unissex'; }) : res.data;
+      if (!lista.length) return;
+      servicoGrid.innerHTML = lista.map(function (s) {
         return '<button type="button" class="pick-btn" data-value="' + esc(s.nome) + '">' + esc(s.nome) + '</button>';
       }).join('');
     }).catch(function () { /* offline: mantém o HTML fixo */ });

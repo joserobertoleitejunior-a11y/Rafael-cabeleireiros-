@@ -20,13 +20,16 @@
 <link rel="stylesheet" href="assets/css/widget.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body>
+<body data-genero="masculino">
 
   <header class="site-topbar">
     <a class="brand" href="index.html"><span class="brand-mark">❧</span> Rafael <em>Cabeleireiros</em></a>
-    <button class="hamburger" id="menuOpenBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="siteMenu" aria-label="Abrir menu">
-      <span></span><span></span><span></span>
-    </button>
+    <div class="topbar-actions">
+      <a class="gender-switch" href="profissionais-feminino.html" data-gender-link="feminino"><span aria-hidden="true">♀</span><span class="gender-switch-label">Área feminina</span></a>
+      <button class="hamburger" id="menuOpenBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="siteMenu" aria-label="Abrir menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
   </header>
 
   <nav class="site-menu" id="siteMenu" aria-hidden="true" aria-label="Menu principal">
@@ -213,5 +216,6 @@
   <script src="assets/js/menu.js"></script>
   <script src="assets/js/supabase-client.js"></script>
   <script src="assets/js/widget.js"></script>
+  <script src="assets/js/gender-gate.js"></script>
 </body>
 </html>

@@ -128,7 +128,8 @@
 
     var lockBtn = $('#lockBtn');
     if (lockBtn) lockBtn.addEventListener('click', function () {
-      Store.logout(session ? session.token : null).then(showPinScreen).catch(showPinScreen);
+      var sairPraHome = function () { window.location.href = 'index.html'; };
+      Store.logout(session ? session.token : null).then(sairPraHome).catch(sairPraHome);
     });
 
     renderCurrentView();
@@ -438,12 +439,15 @@
   function renderDashboard() {
     var container = $('#view-dashboard');
     loading(container, 'Calculando o mês…');
-    Store.dashboardStats(session.token).then(function (stats) {
-      dashboardRenderComDados(container, stats);
+    Promise.all([
+      Store.dashboardStats(session.token),
+      Store.listClients(session.token).catch(function () { return []; })
+    ]).then(function (results) {
+      dashboardRenderComDados(container, results[0], results[1]);
     }).catch(function (e) { erro(container, e); });
   }
 
-  function dashboardRenderComDados(container, stats) {
+  function dashboardRenderComDados(container, stats, clientes) {
     var html = '';
     html += '<div class="admin-view-head"><p class="eyebrow">Visão geral</p><h2>Dashboard</h2><p>Números deste mês, direto do que passou pelo Caixa PDV.</p></div>';
 
@@ -470,7 +474,27 @@
     }
     html += '</div>';
 
+    html += '<div class="adm-panel"><h3 style="margin-bottom:0.4rem;font-size:1.1rem;">Clientes</h3>';
+    if (!clientes || !clientes.length) {
+      html += '<p style="color:var(--adm-text-faint); font-size:0.88rem;">Nenhum cliente ainda.</p>';
+    } else {
+      html += '<div class="adm-hist-list">';
+      clientes.slice(0, 12).forEach(function (c) {
+        html += '<button type="button" class="adm-hist-row" style="width:100%; text-align:left; background:none; border:none; cursor:pointer; font-family:inherit;" data-ver-perfil-dash="' + esc(c.telefone) + '">' +
+          '<div><div class="adm-hist-main">' + esc(c.nome || c.telefone) + '</div>' +
+          '<div class="adm-hist-sub">' + c.total_cortes + ' corte(s)' + (c.tem_agendamento ? ' · <span style="color:var(--adm-gold);">tem agendamento</span>' : '') + '</div></div>' +
+          '<div class="adm-hist-value" style="color:var(--adm-text-faint); font-size:0.8rem;">Ver perfil →</div>' +
+          '</button>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+
     container.innerHTML = html;
+
+    $all('[data-ver-perfil-dash]', container).forEach(function (btn) {
+      btn.addEventListener('click', function () { abrirPerfilCliente(btn.dataset.verPerfilDash); });
+    });
 
     var porBarbeiroData = Object.keys(stats.porBarbeiro || {}).map(function (k) { return { label: k, value: stats.porBarbeiro[k] }; });
     window.RafaelCharts.barChart($('#chartBarbeiro'), {
@@ -526,6 +550,7 @@
         '<input type="text" placeholder="Anotar feedback (opcional)">' +
         '<button type="submit" class="adm-btn adm-btn-sm">+</button>' +
         '</form>' +
+        '<button type="button" class="adm-btn adm-btn-ghost adm-btn-sm" style="margin-top:0.8rem; width:100%;" data-ver-perfil="' + esc(c.telefone) + '">Ver perfil completo →</button>' +
         '</div>';
     });
     html += '</div>';
@@ -541,6 +566,48 @@
           .catch(function (err) { alert('Não deu pra salvar: ' + err.message); });
       });
     });
+    $all('[data-ver-perfil]', container).forEach(function (btn) {
+      btn.addEventListener('click', function () { abrirPerfilCliente(btn.dataset.verPerfil); });
+    });
+  }
+
+  function abrirPerfilCliente(telefone) {
+    Store.clientProfile(session.token, telefone).then(function (perfil) {
+      openModal(renderClientProfile(perfil));
+    }).catch(function (e) { alert('Não deu pra carregar o perfil: ' + e.message); });
+  }
+
+  function renderClientProfile(perfil) {
+    var wrap = document.createElement('div');
+    var porProfissional = {};
+    (perfil.vendas || []).forEach(function (v) {
+      var nome = v.profissional || 'Sem profissional';
+      porProfissional[nome] = (porProfissional[nome] || 0) + 1;
+    });
+    var linhasProfissional = Object.keys(porProfissional).map(function (nome) {
+      return '<div class="adm-hist-row"><div class="adm-hist-main">' + esc(nome) + '</div><div class="adm-hist-value">' + porProfissional[nome] + ' corte(s)</div></div>';
+    }).join('') || '<p style="color:var(--adm-text-faint); font-size:0.85rem;">Nenhum corte registrado ainda.</p>';
+
+    var agendamentosFuturos = (perfil.agendamentos || []).filter(function (a) { return a.status !== 'cancelado' && a.dia >= new Date().toISOString().slice(0, 10); });
+    var linhasAgendamentos = (perfil.agendamentos || []).map(function (a) {
+      return '<div class="adm-hist-row"><div><div class="adm-hist-main">' + esc(a.dia) + ' às ' + esc(a.horario) + '</div>' +
+        '<div class="adm-hist-sub">' + esc(a.servico || '') + ' · ' + esc(a.profissional || 'sem profissional') + ' · <span style="color:var(--adm-gold);">' + esc(a.status) + '</span></div></div></div>';
+    }).join('') || '<p style="color:var(--adm-text-faint); font-size:0.85rem;">Nenhum agendamento ainda.</p>';
+
+    var linhasVendas = (perfil.vendas || []).map(function (v) {
+      return '<div class="adm-hist-row"><div><div class="adm-hist-main">' + esc(v.servico || '') + '</div>' +
+        '<div class="adm-hist-sub">' + esc(v.profissional || '') + ' · ' + fmtDateBR(v.data) + '</div></div>' +
+        '<div class="adm-hist-value">' + fmtBRL(v.valor) + '</div></div>';
+    }).join('') || '<p style="color:var(--adm-text-faint); font-size:0.85rem;">Nenhuma venda registrada ainda.</p>';
+
+    wrap.innerHTML =
+      '<div class="adm-modal-head"><h3>' + esc(perfil.nome || 'Sem nome') + '</h3><button type="button" class="adm-modal-close" id="modalCloseBtn">×</button></div>' +
+      '<p style="color:var(--adm-text-soft); font-size:0.88rem; margin-bottom:1rem;">' + esc(perfil.telefone) +
+      (agendamentosFuturos.length ? ' · <span style="color:var(--adm-gold);">tem agendamento marcado</span>' : '') + '</p>' +
+      '<h4 style="font-size:0.95rem; margin-bottom:0.5rem;">Cortes por profissional</h4><div class="adm-hist-list">' + linhasProfissional + '</div>' +
+      '<h4 style="font-size:0.95rem; margin:1.2rem 0 0.5rem;">Agendamentos</h4><div class="adm-hist-list">' + linhasAgendamentos + '</div>' +
+      '<h4 style="font-size:0.95rem; margin:1.2rem 0 0.5rem;">Histórico de vendas</h4><div class="adm-hist-list">' + linhasVendas + '</div>';
+    return wrap;
   }
 
   // ----------------------------------------------------- Serviços e Valores

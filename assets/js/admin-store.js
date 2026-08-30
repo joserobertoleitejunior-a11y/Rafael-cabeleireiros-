@@ -140,6 +140,9 @@
     listClientFeedback: function (token, telefone) {
       return unwrap(db().rpc('list_client_feedback', { p_token: token, p_telefone: telefone }));
     },
+    clientProfile: function (token, telefone) {
+      return unwrap(db().rpc('client_profile', { p_token: token, p_telefone: telefone }));
+    },
     addStaffFeedback: function (token, telefone, comentario) {
       return unwrap(db().rpc('add_staff_feedback', { p_token: token, p_telefone: telefone, p_comentario: comentario }));
     },

@@ -18,6 +18,25 @@
   var overlay = document.getElementById('wizardOverlay');
   if (!overlay) return;
 
+  // Selo temporário de diagnóstico — mostra na tela (sem precisar de
+  // ferramentas de desenvolvedor) se o arquivo novo carregou e se o clique
+  // em Continuar está sendo recebido. Remover assim que confirmarmos a
+  // causa do agendamento que trava sem aviso em alguns celulares.
+  var DEBUG_BUILD = '20260830e';
+  var debugBadge = document.createElement('div');
+  debugBadge.id = 'wizardDebugBadge';
+  debugBadge.style.cssText = 'position:fixed;bottom:6px;right:6px;font-size:10px;line-height:1.4;' +
+    'color:#5b4a2f;background:rgba(255,255,255,.92);padding:4px 9px;border-radius:7px;' +
+    'z-index:9999;pointer-events:none;font-family:monospace;max-width:80vw;box-shadow:0 1px 4px rgba(0,0,0,.15);';
+  debugBadge.textContent = 'build ' + DEBUG_BUILD;
+  document.addEventListener('DOMContentLoaded', function () {
+    if (document.body) document.body.appendChild(debugBadge);
+  });
+  if (document.body) document.body.appendChild(debugBadge);
+  function debugLog(msg) {
+    debugBadge.textContent = 'build ' + DEBUG_BUILD + ' · ' + msg;
+  }
+
   var closeBtn = document.getElementById('wizardClose');
   var backBtn = document.getElementById('wizardBack');
   var nextBtn = document.getElementById('wizardNext');
@@ -204,6 +223,7 @@
     // mesmo com os campos já preenchidos. A classe só avisa visualmente;
     // o clique sempre confere o valor de verdade dos campos na hora.
     nextBtn.classList.toggle('is-disabled', !isStepValid(current));
+    debugLog('passo=' + current + ' valido=' + isStepValid(current));
 
     if (current === totalSteps) {
       document.getElementById('summaryBox').innerHTML =
@@ -342,6 +362,7 @@
   }
 
   nextBtn.addEventListener('click', function () {
+    debugLog('CLIQUE continuar recebido, passo=' + current);
     syncContatoFields();
     if (!isStepValid(current)) {
       render();

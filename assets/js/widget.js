@@ -198,7 +198,12 @@
     });
     backBtn.disabled = current === 1;
     nextBtn.textContent = current === totalSteps ? 'Confirmar e enviar no WhatsApp' : 'Continuar';
-    nextBtn.disabled = !isStepValid(current);
+    // Não usamos o atributo disabled de verdade aqui — em alguns celulares
+    // o autopreenchimento do teclado (nome/telefone) não dispara o evento
+    // "input", e o botão ficava com disabled=true travado pra sempre,
+    // mesmo com os campos já preenchidos. A classe só avisa visualmente;
+    // o clique sempre confere o valor de verdade dos campos na hora.
+    nextBtn.classList.toggle('is-disabled', !isStepValid(current));
 
     if (current === totalSteps) {
       document.getElementById('summaryBox').innerHTML =
@@ -227,11 +232,13 @@
     choices.telefone = telefoneInput ? telefoneInput.value.trim() : '';
   }
 
-  if (nomeInput) nomeInput.addEventListener('input', function () { syncContatoFields(); render(); });
-  if (telefoneInput) telefoneInput.addEventListener('input', function () { syncContatoFields(); render(); });
+  ['input', 'change', 'blur'].forEach(function (evt) {
+    if (nomeInput) nomeInput.addEventListener(evt, function () { syncContatoFields(); render(); });
+    if (telefoneInput) telefoneInput.addEventListener(evt, function () { syncContatoFields(); render(); });
+  });
 
   var dadosCarregados = false;
-  function open(preselectProf) {
+  function open(preselectProf, preselectServico) {
     lastFocused = document.activeElement;
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
@@ -266,7 +273,8 @@
     }
 
     if (preselectProf) selectChoice('profissional', preselectProf);
-    current = isReturningClient ? (preselectProf ? 3 : 2) : STEP_CONTATO;
+    if (preselectServico) selectChoice('servico', preselectServico);
+    current = isReturningClient ? (preselectProf ? (preselectServico ? 4 : 3) : 2) : STEP_CONTATO;
     render();
     if (closeBtn) closeBtn.focus();
   }
@@ -333,7 +341,14 @@
   }
 
   nextBtn.addEventListener('click', function () {
-    if (!isStepValid(current)) return;
+    syncContatoFields();
+    if (!isStepValid(current)) {
+      render();
+      var stepEl = steps[current - 1];
+      var vazio = stepEl.querySelector('.field-input[required]');
+      if (vazio) vazio.focus();
+      return;
+    }
 
     if (current === STEP_CONTATO) {
       syncContatoFields();
@@ -377,7 +392,7 @@
   // Abre o widget a partir de qualquer botão marcado com data-open-widget.
   document.querySelectorAll('[data-open-widget]').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      open(btn.getAttribute('data-preselect-prof'));
+      open(btn.getAttribute('data-preselect-prof'), btn.getAttribute('data-preselect-servico'));
       if (window.RafaelMenu) window.RafaelMenu.close();
     });
   });

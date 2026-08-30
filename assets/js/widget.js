@@ -18,23 +18,13 @@
   var overlay = document.getElementById('wizardOverlay');
   if (!overlay) return;
 
-  // Selo temporário de diagnóstico — mostra na tela (sem precisar de
-  // ferramentas de desenvolvedor) se o arquivo novo carregou e se o clique
-  // em Continuar está sendo recebido. Remover assim que confirmarmos a
-  // causa do agendamento que trava sem aviso em alguns celulares.
-  var DEBUG_BUILD = '20260830g';
-  var debugBadge = document.createElement('div');
-  debugBadge.id = 'wizardDebugBadge';
-  debugBadge.style.cssText = 'position:fixed;bottom:6px;right:6px;font-size:10px;line-height:1.4;' +
-    'color:#5b4a2f;background:rgba(255,255,255,.92);padding:4px 9px;border-radius:7px;' +
-    'z-index:9999;pointer-events:none;font-family:monospace;max-width:80vw;box-shadow:0 1px 4px rgba(0,0,0,.15);';
-  debugBadge.textContent = 'build ' + DEBUG_BUILD;
-  document.addEventListener('DOMContentLoaded', function () {
-    if (document.body) document.body.appendChild(debugBadge);
-  });
-  if (document.body) document.body.appendChild(debugBadge);
-  function debugLog(msg) {
-    debugBadge.textContent = 'build ' + DEBUG_BUILD + ' · ' + msg;
+  // Chama uma função do Supabase (window.db.rpc/from/...) sem deixar um
+  // erro síncrono dela travar o resto do agendamento — foi exatamente
+  // isso que prendia a tela em "Antes de começar" sem nenhum aviso: uma
+  // chamada de rede sem try/catch quebrava no meio e nunca deixava o
+  // código chegar em current++ / render().
+  function safeDbCall(fn) {
+    try { fn(); } catch (e) { console.error('Chamada ao banco falhou (ignorada, não afeta o agendamento):', e); }
   }
 
   var closeBtn = document.getElementById('wizardClose');
@@ -97,29 +87,33 @@
   // -------- dados reais (Supabase), com fallback pro que já está no HTML --------
   function carregarProfissionaisEServicos() {
     if (!window.db) return;
-    window.db.from('staff_public').select('id,nome,especialidade,foto_url').then(function (res) {
-      if (res.error || !res.data || !res.data.length) return;
-      staffList = res.data;
-      profissionalList.innerHTML = res.data.map(function (p) {
-        return '<button type="button" class="pick-card" data-value="' + esc(p.nome) + '" data-staff-id="' + p.id + '">' +
-          (p.foto_url ? '<img src="' + esc(p.foto_url) + '" class="tone-bw" alt="">' : '<img src="assets/img/placeholder-portrait.svg" class="tone-bw" alt="">') +
-          esc(p.nome) + (p.especialidade ? ' — ' + esc(p.especialidade) : '') +
-          '</button>';
-      }).join('');
-    }).catch(function () { /* offline: mantém o HTML fixo */ });
+    safeDbCall(function () {
+      window.db.from('staff_public').select('id,nome,especialidade,foto_url').then(function (res) {
+        if (res.error || !res.data || !res.data.length) return;
+        staffList = res.data;
+        profissionalList.innerHTML = res.data.map(function (p) {
+          return '<button type="button" class="pick-card" data-value="' + esc(p.nome) + '" data-staff-id="' + p.id + '">' +
+            (p.foto_url ? '<img src="' + esc(p.foto_url) + '" class="tone-bw" alt="">' : '<img src="assets/img/placeholder-portrait.svg" class="tone-bw" alt="">') +
+            esc(p.nome) + (p.especialidade ? ' — ' + esc(p.especialidade) : '') +
+            '</button>';
+        }).join('');
+      }).catch(function () { /* offline: mantém o HTML fixo */ });
+    });
 
     // A trilha da página (masculino/feminino, ver body[data-genero]) filtra
     // o que aparece pra agendar — serviço "unissex" (ex: Coloração) aparece
     // nas duas. Sem trilha marcada (ex: o Caixa PDV do painel), mostra tudo.
     var genero = document.body.getAttribute('data-genero');
-    window.db.from('services').select('id,nome,preco,categoria').eq('ativo', true).then(function (res) {
-      if (res.error || !res.data || !res.data.length) return;
-      var lista = genero ? res.data.filter(function (s) { return s.categoria === genero || s.categoria === 'unissex'; }) : res.data;
-      if (!lista.length) return;
-      servicoGrid.innerHTML = lista.map(function (s) {
-        return '<button type="button" class="pick-btn" data-value="' + esc(s.nome) + '">' + esc(s.nome) + '</button>';
-      }).join('');
-    }).catch(function () { /* offline: mantém o HTML fixo */ });
+    safeDbCall(function () {
+      window.db.from('services').select('id,nome,preco,categoria').eq('ativo', true).then(function (res) {
+        if (res.error || !res.data || !res.data.length) return;
+        var lista = genero ? res.data.filter(function (s) { return s.categoria === genero || s.categoria === 'unissex'; }) : res.data;
+        if (!lista.length) return;
+        servicoGrid.innerHTML = lista.map(function (s) {
+          return '<button type="button" class="pick-btn" data-value="' + esc(s.nome) + '">' + esc(s.nome) + '</button>';
+        }).join('');
+      }).catch(function () { /* offline: mantém o HTML fixo */ });
+    });
   }
 
   // Dias que a casa fica fechada (dia_semana 0=domingo..6=sábado), pra não
@@ -127,10 +121,15 @@
   // domingo fechado) — o banco ainda recusa no fim das contas.
   function carregarDiasFechados() {
     if (!window.db) { diasFechados = new Set([0]); return Promise.resolve(); }
-    return window.db.from('business_hours').select('dia_semana,fechado').then(function (res) {
-      diasFechados = new Set((res.data || []).filter(function (r) { return r.fechado; }).map(function (r) { return r.dia_semana; }));
-      if (!diasFechados.size) diasFechados = new Set([0]);
-    }).catch(function () { diasFechados = new Set([0]); });
+    try {
+      return window.db.from('business_hours').select('dia_semana,fechado').then(function (res) {
+        diasFechados = new Set((res.data || []).filter(function (r) { return r.fechado; }).map(function (r) { return r.dia_semana; }));
+        if (!diasFechados.size) diasFechados = new Set([0]);
+      }).catch(function () { diasFechados = new Set([0]); });
+    } catch (e) {
+      diasFechados = new Set([0]);
+      return Promise.resolve();
+    }
   }
 
   // Delegação de clique nos grupos — anexada uma única vez; sobrevive a
@@ -186,10 +185,14 @@
     var iso = diaBtn.getAttribute('data-iso');
     var profBtn = profissionalList.querySelector('.pick-card.selected');
     var staffId = profBtn ? profBtn.getAttribute('data-staff-id') : null;
-    window.db.rpc('public_agenda_slots', { p_dia: iso, p_staff_id: staffId || null }).then(function (res) {
-      if (res.error || !res.data) { renderHorarios(HORARIOS_PADRAO.map(function (h) { return { horario: h, disponivel: true }; })); return; }
-      renderHorarios(res.data);
-    }).catch(function () { renderHorarios(HORARIOS_PADRAO.map(function (h) { return { horario: h, disponivel: true }; })); });
+    try {
+      window.db.rpc('public_agenda_slots', { p_dia: iso, p_staff_id: staffId || null }).then(function (res) {
+        if (res.error || !res.data) { renderHorarios(HORARIOS_PADRAO.map(function (h) { return { horario: h, disponivel: true }; })); return; }
+        renderHorarios(res.data);
+      }).catch(function () { renderHorarios(HORARIOS_PADRAO.map(function (h) { return { horario: h, disponivel: true }; })); });
+    } catch (e) {
+      renderHorarios(HORARIOS_PADRAO.map(function (h) { return { horario: h, disponivel: true }; }));
+    }
   }
 
   function isStepValid(step) {
@@ -223,7 +226,6 @@
     // mesmo com os campos já preenchidos. A classe só avisa visualmente;
     // o clique sempre confere o valor de verdade dos campos na hora.
     nextBtn.classList.toggle('is-disabled', !isStepValid(current));
-    debugLog('passo=' + current + ' valido=' + isStepValid(current));
 
     if (current === totalSteps) {
       document.getElementById('summaryBox').innerHTML =
@@ -297,7 +299,9 @@
       // cliente que já tem contato salvo pula o passo 1 — registra o
       // acesso aqui mesmo, senão quem só volta nunca contaria de novo
       if (window.db) {
-        window.db.rpc('registrar_cliente', { p_nome: saved.nome, p_telefone: saved.telefone }).catch(function () { /* offline, sem problema */ });
+        safeDbCall(function () {
+          window.db.rpc('registrar_cliente', { p_nome: saved.nome, p_telefone: saved.telefone }).catch(function () { /* offline, sem problema */ });
+        });
       }
     }
     if (welcomeHint) {
@@ -356,30 +360,34 @@
     if (!window.db) return Promise.resolve({ ok: false, bloqueado: false });
     var diaBtn = diaRow.querySelector('.day-btn.selected');
     var profBtn = profissionalList.querySelector('.pick-card.selected');
-    return window.db.from('appointments').insert({
-      cliente_nome: choices.nome || '',
-      cliente_telefone: choices.telefone || '',
-      staff_id: profBtn ? profBtn.getAttribute('data-staff-id') : null,
-      staff_nome: choices.profissional || null,
-      servico: choices.servico || null,
-      dia: diaBtn ? diaBtn.getAttribute('data-iso') : null,
-      dia_label: choices.dia || null,
-      horario: choices.horario || '',
-      origem: 'site'
-    }).then(function (res) {
-      if (res.error) {
-        console.error('Não deu pra salvar o agendamento no banco:', res.error.message);
-        return { ok: false, bloqueado: true, message: res.error.message };
-      }
-      return { ok: true };
-    }).catch(function (e) {
+    try {
+      return window.db.from('appointments').insert({
+        cliente_nome: choices.nome || '',
+        cliente_telefone: choices.telefone || '',
+        staff_id: profBtn ? profBtn.getAttribute('data-staff-id') : null,
+        staff_nome: choices.profissional || null,
+        servico: choices.servico || null,
+        dia: diaBtn ? diaBtn.getAttribute('data-iso') : null,
+        dia_label: choices.dia || null,
+        horario: choices.horario || '',
+        origem: 'site'
+      }).then(function (res) {
+        if (res.error) {
+          console.error('Não deu pra salvar o agendamento no banco:', res.error.message);
+          return { ok: false, bloqueado: true, message: res.error.message };
+        }
+        return { ok: true };
+      }).catch(function (e) {
+        console.error('Agenda offline, seguindo só pelo WhatsApp:', e);
+        return { ok: false, bloqueado: false };
+      });
+    } catch (e) {
       console.error('Agenda offline, seguindo só pelo WhatsApp:', e);
-      return { ok: false, bloqueado: false };
-    });
+      return Promise.resolve({ ok: false, bloqueado: false });
+    }
   }
 
   nextBtn.addEventListener('click', function () {
-    debugLog('CLIQUE continuar recebido, passo=' + current);
     syncContatoFields();
     if (!isStepValid(current)) {
       render();
@@ -396,20 +404,24 @@
       return;
     }
 
-    if (current === STEP_CONTATO) {
+    var eraStepContato = current === STEP_CONTATO;
+    if (eraStepContato) {
       syncContatoFields();
       saveContact(choices.nome, choices.telefone);
-      // já captura o cliente no banco assim que ele preenche os dados —
-      // não precisa esperar terminar o agendamento pra aparecer em Clientes
-      if (window.db) {
-        window.db.rpc('registrar_cliente', { p_nome: choices.nome || '', p_telefone: choices.telefone || '' }).catch(function () { /* offline: sem problema, tenta de novo na próxima visita */ });
-      }
     }
 
     if (current < totalSteps) {
       current++;
       render();
       overlay.scrollTop = 0;
+      // Captura o cliente no banco DEPOIS de já ter avançado a tela — um
+      // erro aqui (rede, SDK, o que for) nunca pode travar o agendamento,
+      // então isso roda por último e nunca bloqueia o passo seguinte.
+      if (eraStepContato && window.db) {
+        safeDbCall(function () {
+          window.db.rpc('registrar_cliente', { p_nome: choices.nome || '', p_telefone: choices.telefone || '' }).catch(function () { /* offline: sem problema, tenta de novo na próxima visita */ });
+        });
+      }
       return;
     }
 

@@ -100,6 +100,9 @@
     updateStaffPhoto: function (token, id, fotoUrl) {
       return unwrap(db().rpc('admin_update_staff_photo', { p_token: token, p_id: id, p_foto_url: fotoUrl }));
     },
+    updateStaffEspecialidade: function (token, id, especialidade) {
+      return unwrap(db().rpc('admin_update_staff_especialidade', { p_token: token, p_id: id, p_especialidade: especialidade }));
+    },
     removeStaff: function (token, id) {
       return unwrap(db().rpc('admin_remove_staff', { p_token: token, p_id: id }));
     },

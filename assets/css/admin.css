@@ -45,6 +45,47 @@
 .taxa-banner .taxa-msg{font-size:0.85rem; margin-top:0.6rem;}
 .taxa-banner .taxa-msg.erro{color:var(--adm-danger);}
 
+/* Tira colapsada — só uma linha fina e clicável; o aviso completo (com
+   os botões de pagamento) só aparece quando o dono toca nela. */
+.taxa-strip{
+  display:block; width:calc(100% - 10vw); margin:0.7rem 5vw 0; text-align:left;
+  background:var(--adm-gold-bg); border:1px solid var(--adm-gold-soft); border-radius:999px;
+  color:var(--adm-gold); font-size:0.78rem; padding:0.5rem 1rem; cursor:pointer; font-family:inherit;
+}
+.taxa-strip.taxa-strip-ok{border-color:rgba(120,168,110,0.4); color:#8fbf8a; background:rgba(120,168,110,0.08);}
+.taxa-strip:hover{background:rgba(201,162,39,0.18);}
+
+/* ---------- Sininho de notificações (agendamentos + avisos) ---------- */
+.notif-bell{position:fixed; bottom:20px; right:20px; z-index:95;}
+.notif-btn{
+  width:52px; height:52px; border-radius:50%; background:var(--adm-panel);
+  border:1.5px solid var(--adm-gold); color:var(--adm-gold);
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,0,0,0.4); position:relative; padding:0;
+}
+.notif-btn:hover{background:var(--adm-panel-alt);}
+.notif-btn svg{width:24px; height:24px;}
+.notif-badge{
+  position:absolute; top:-3px; right:-3px; background:var(--adm-gold); color:#121110;
+  font-size:0.66rem; font-weight:700; min-width:18px; height:18px; border-radius:999px;
+  display:flex; align-items:center; justify-content:center; padding:0 4px; line-height:1;
+}
+.notif-panel{
+  position:absolute; bottom:64px; right:0; width:320px; max-width:calc(100vw - 40px);
+  max-height:420px; overflow-y:auto; background:var(--adm-panel);
+  border:1px solid var(--adm-gold-soft); border-radius:var(--adm-radius);
+  box-shadow:0 10px 30px rgba(0,0,0,0.5); padding:0.9rem;
+}
+.notif-panel h4{font-size:0.92rem; color:var(--adm-gold); margin-bottom:0.6rem;}
+.notif-item{padding:0.6rem 0; border-bottom:1px solid rgba(255,255,255,0.07); font-size:0.83rem; color:var(--adm-text-soft);}
+.notif-item:last-child{border-bottom:none;}
+.notif-item strong{color:var(--adm-off-white); display:block; font-size:0.86rem;}
+.notif-aviso{
+  background:rgba(201,162,39,0.12); border:1px solid var(--adm-gold-soft); border-radius:8px;
+  padding:0.6rem 0.7rem; margin-bottom:0.6rem; font-size:0.8rem; color:var(--adm-off-white);
+}
+.notif-empty{color:var(--adm-text-faint); font-size:0.83rem; text-align:center; padding:1rem 0;}
+
 /* ---------- PIN ---------- */
 .admin-pin-screen{
   min-height:100vh; min-height:100svh;

@@ -176,6 +176,9 @@
     mpPublicKey: function () {
       return unwrap(db().rpc('mp_public_key', {}));
     },
+    adminNotificacoes: function (token) {
+      return unwrap(db().rpc('admin_notificacoes', { p_token: token }));
+    },
 
     // ---- agenda (qualquer funcionário logado marca/desmarca — validação de
     // horário de funcionamento e de conflito acontece no banco, via trigger) ----

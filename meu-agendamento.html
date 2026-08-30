@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  try {
+    if (sessionStorage.getItem('rafaelFreshLoad')) return;
+    sessionStorage.setItem('rafaelFreshLoad', '1');
+    if (location.protocol.indexOf('http') !== 0) return;
+    var u = new URL(location.href);
+    if (u.searchParams.has('_r')) return;
+    u.searchParams.set('_r', Date.now().toString(36));
+    location.replace(u.toString());
+  } catch (e) { /* sessionStorage bloqueado — segue sem forçar */ }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no, date=no, address=no">
+<title>Meu agendamento — Rafael Cabeleireiros</title>
+<meta name="description" content="Consulte, remarque ou cancele seu horário no Rafael Cabeleireiros.">
+<meta name="theme-color" content="#F7F3EC">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css?v=20260830j">
+<link rel="stylesheet" href="assets/css/widget.css?v=20260830j">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  .meu-wrap{max-width:560px; margin:0 auto; padding:3.5rem 6vw 5rem;}
+  .meu-wrap h1{font-size:1.7rem; margin:0.6rem 0 0.4rem;}
+  .meu-wrap p.hint{color:var(--ink-soft); margin-bottom:1.8rem;}
+  .meu-busca{display:flex; gap:0.7rem; margin-bottom:2rem; flex-wrap:wrap;}
+  .meu-busca input{flex:1; min-width:200px;}
+  .meu-card{
+    border:1.5px solid var(--stone); border-radius:var(--radius); padding:1.3rem 1.4rem;
+    margin-bottom:1.1rem; background:var(--white);
+  }
+  .meu-card h3{font-size:1.15rem; margin-bottom:0.3rem;}
+  .meu-card p{color:var(--ink-soft); font-size:0.9rem; margin:0.15rem 0;}
+  .meu-card .status-pill{
+    display:inline-block; font-size:0.72rem; letter-spacing:0.06em; text-transform:uppercase;
+    padding:0.2rem 0.6rem; border-radius:999px; margin-top:0.4rem;
+  }
+  .status-pendente{background:rgba(201,162,39,0.15); color:#a5842a;}
+  .status-confirmado{background:rgba(120,168,110,0.15); color:#4d7a45;}
+  .meu-card-acoes{display:flex; gap:0.6rem; flex-wrap:wrap; margin-top:0.9rem;}
+  .meu-remarcar-box{margin-top:1rem; padding-top:1rem; border-top:1px dashed var(--stone); display:none;}
+  .meu-remarcar-box.open{display:block;}
+  .meu-msg{font-size:0.88rem; margin-top:0.6rem;}
+  .meu-msg.erro{color:#B5533C;}
+  .meu-msg.ok{color:#4d7a45;}
+  .meu-vazio{color:var(--ink-soft); text-align:center; padding:2rem 0;}
+</style>
+</head>
+<body>
+  <div class="meu-wrap">
+    <span class="eyebrow">Rafael Cabeleireiros</span>
+    <h1>Meu agendamento</h1>
+    <p class="hint">Digite o WhatsApp usado na hora de marcar pra ver, remarcar ou cancelar seu horário.</p>
+
+    <div class="meu-busca">
+      <input class="field-input" type="tel" id="telInput" placeholder="(15) 90000-0000" inputmode="tel">
+      <button class="btn" type="button" id="buscarBtn">Buscar</button>
+    </div>
+
+    <div id="lista"></div>
+  </div>
+
+  <script src="assets/js/supabase-client.js?v=20260830j"></script>
+  <script>
+  (function () {
+    var DIAS_ABREV = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
+    var HORARIOS_PADRAO = ['09:00', '10:30', '14:00', '15:30', '17:00', '18:00'];
+    var telInput = document.getElementById('telInput');
+    var buscarBtn = document.getElementById('buscarBtn');
+    var lista = document.getElementById('lista');
+    var telefoneAtual = '';
+
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function isoDate(d) {
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function gerarDiasUteis(n) {
+      var dias = [];
+      var hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+      for (var i = 1; dias.length < n; i++) {
+        var d = new Date(hoje); d.setDate(hoje.getDate() + i);
+        dias.push(d);
+      }
+      return dias;
+    }
+
+    function buscar() {
+      var tel = telInput.value.trim();
+      if (!tel) { telInput.focus(); return; }
+      telefoneAtual = tel;
+      lista.innerHTML = '<p class="meu-vazio">Buscando…</p>';
+      if (!window.db) { lista.innerHTML = '<p class="meu-vazio">Sem conexão agora. Tenta de novo em instantes.</p>'; return; }
+      window.db.rpc('meus_agendamentos', { p_telefone: tel }).then(function (res) {
+        if (res.error) throw new Error(res.error.message);
+        renderLista(res.data || []);
+      }).catch(function (e) {
+        lista.innerHTML = '<p class="meu-vazio">Não deu pra buscar: ' + esc(e.message) + '</p>';
+      });
+    }
+    buscarBtn.addEventListener('click', buscar);
+    telInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') buscar(); });
+
+    function renderLista(agendamentos) {
+      if (!agendamentos.length) {
+        lista.innerHTML = '<p class="meu-vazio">Nenhum agendamento futuro encontrado pra esse número.</p>';
+        return;
+      }
+      lista.innerHTML = agendamentos.map(function (a) {
+        return '<div class="meu-card" data-id="' + a.id + '">' +
+          '<h3>' + esc(a.servico || 'Serviço') + '</h3>' +
+          '<p>Com ' + esc(a.staff_nome || 'a equipe') + '</p>' +
+          '<p>' + esc(a.dia_label || a.dia) + ' às ' + esc(a.horario) + '</p>' +
+          '<span class="status-pill status-' + esc(a.status) + '">' + esc(a.status) + '</span>' +
+          '<div class="meu-card-acoes">' +
+          '<button type="button" class="btn btn-ghost" data-remarcar="' + a.id + '">Alterar horário</button>' +
+          '<button type="button" class="btn btn-ghost" data-cancelar="' + a.id + '">Cancelar</button>' +
+          '</div>' +
+          '<div class="meu-remarcar-box" id="remarcar-' + a.id + '"></div>' +
+          '<p class="meu-msg" id="msg-' + a.id + '"></p>' +
+          '</div>';
+      }).join('');
+
+      lista.querySelectorAll('[data-cancelar]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-cancelar');
+          var msgEl = document.getElementById('msg-' + id);
+          if (!confirm('Cancelar esse agendamento?')) return;
+          btn.disabled = true;
+          window.db.rpc('cancelar_meu_agendamento', { p_id: id, p_telefone: telefoneAtual }).then(function (res) {
+            if (res.error) throw new Error(res.error.message);
+            msgEl.textContent = 'Cancelado.';
+            msgEl.className = 'meu-msg ok';
+            setTimeout(buscar, 900);
+          }).catch(function (e) {
+            msgEl.textContent = e.message;
+            msgEl.className = 'meu-msg erro';
+            btn.disabled = false;
+          });
+        });
+      });
+
+      lista.querySelectorAll('[data-remarcar]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-remarcar');
+          abrirRemarcar(id, btn);
+        });
+      });
+    }
+
+    function abrirRemarcar(id, origemBtn) {
+      var box = document.getElementById('remarcar-' + id);
+      var jaAberto = box.classList.contains('open');
+      lista.querySelectorAll('.meu-remarcar-box.open').forEach(function (b) { b.classList.remove('open'); b.innerHTML = ''; });
+      if (jaAberto) return;
+
+      var dias = gerarDiasUteis(6);
+      box.innerHTML =
+        '<p class="hint" style="margin-bottom:0.8rem;">Escolha o novo dia e horário.</p>' +
+        '<div class="day-row" data-role="dias">' + dias.map(function (d) {
+          var label = DIAS_ABREV[d.getDay()] + ' ' + String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+          return '<button type="button" class="day-btn" data-value="' + label + '" data-iso="' + isoDate(d) + '">' +
+            DIAS_ABREV[d.getDay()] + '<br>' + String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '</button>';
+        }).join('') + '</div>' +
+        '<div class="time-grid" data-role="horarios" style="margin-top:0.8rem;">' + HORARIOS_PADRAO.map(function (h) {
+          return '<button type="button" class="time-btn" data-value="' + h + '">' + h + '</button>';
+        }).join('') + '</div>' +
+        '<button type="button" class="btn" style="margin-top:1rem;" id="confirmarRemarcar-' + id + '" disabled>Escolha dia e horário</button>';
+      box.classList.add('open');
+
+      var diaEscolhido = null, diaLabelEscolhido = null, horarioEscolhido = null;
+      var confirmarBtn = document.getElementById('confirmarRemarcar-' + id);
+
+      box.querySelector('[data-role="dias"]').addEventListener('click', function (e) {
+        var b = e.target.closest('.day-btn'); if (!b) return;
+        box.querySelectorAll('.day-btn').forEach(function (x) { x.classList.remove('selected'); });
+        b.classList.add('selected');
+        diaEscolhido = b.getAttribute('data-iso');
+        diaLabelEscolhido = b.getAttribute('data-value');
+        atualizarBotaoConfirmar();
+      });
+      box.querySelector('[data-role="horarios"]').addEventListener('click', function (e) {
+        var b = e.target.closest('.time-btn'); if (!b) return;
+        box.querySelectorAll('.time-btn').forEach(function (x) { x.classList.remove('selected'); });
+        b.classList.add('selected');
+        horarioEscolhido = b.getAttribute('data-value');
+        atualizarBotaoConfirmar();
+      });
+      function atualizarBotaoConfirmar() {
+        var pronto = diaEscolhido && horarioEscolhido;
+        confirmarBtn.disabled = !pronto;
+        confirmarBtn.textContent = pronto ? 'Confirmar novo horário' : 'Escolha dia e horário';
+      }
+
+      confirmarBtn.addEventListener('click', function () {
+        var msgEl = document.getElementById('msg-' + id);
+        confirmarBtn.disabled = true;
+        window.db.rpc('remarcar_meu_agendamento', {
+          p_id: id, p_telefone: telefoneAtual, p_dia: diaEscolhido, p_dia_label: diaLabelEscolhido, p_horario: horarioEscolhido
+        }).then(function (res) {
+          if (res.error) throw new Error(res.error.message);
+          msgEl.textContent = 'Horário alterado! Aguarde a confirmação da equipe.';
+          msgEl.className = 'meu-msg ok';
+          setTimeout(buscar, 1200);
+        }).catch(function (e) {
+          msgEl.textContent = e.message;
+          msgEl.className = 'meu-msg erro';
+          confirmarBtn.disabled = false;
+        });
+      });
+    }
+  })();
+  </script>
+</body>
+</html>

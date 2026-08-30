@@ -203,7 +203,7 @@
 }
 .adm-client-name{font-family:'Cormorant Garamond',serif; font-size:1.3rem;}
 .adm-client-phone{color:var(--adm-text-soft); font-size:0.85rem;}
-.adm-client-stats{display:flex; gap:1.2rem;}
+.adm-client-stats{display:flex; gap:1.2rem; flex-wrap:wrap;}
 .adm-client-stats div strong{display:block; color:var(--adm-gold); font-size:1.1rem;}
 .adm-client-stats div span{font-size:0.7rem; color:var(--adm-text-faint); text-transform:uppercase;}
 .adm-client-head{display:flex; align-items:flex-start; justify-content:space-between; gap:0.8rem;}

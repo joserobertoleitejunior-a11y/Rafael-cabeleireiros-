@@ -492,8 +492,8 @@
     loading(container, 'Montando a base de clientes…');
     Store.listClients(session.token).then(function (clientes) {
       if (!clientes.length) {
-        container.innerHTML = '<div class="admin-view-head"><p class="eyebrow">Base de clientes</p><h2>Clientes</h2><p>Construída a partir do histórico de vendas do Caixa PDV.</p></div>' +
-          '<div class="adm-panel"><p style="color:var(--adm-text-faint); font-size:0.9rem;">Nenhum cliente ainda — registre uma venda com nome e telefone no Caixa PDV pra começar a lista.</p></div>';
+        container.innerHTML = '<div class="admin-view-head"><p class="eyebrow">Base de clientes</p><h2>Clientes</h2><p>Captado assim que a pessoa preenche o telefone na agenda do site, ou registra uma venda no Caixa.</p></div>' +
+          '<div class="adm-panel"><p style="color:var(--adm-text-faint); font-size:0.9rem;">Nenhum cliente ainda.</p></div>';
         return;
       }
       Promise.all(clientes.map(function (c) { return Store.listClientFeedback(session.token, c.telefone).catch(function () { return []; }); }))
@@ -504,7 +504,7 @@
   }
 
   function clientesRenderComDados(container, clientes, feedbacks) {
-    var html = '<div class="admin-view-head"><p class="eyebrow">Base de clientes</p><h2>Clientes</h2><p>Construída a partir do histórico de vendas do Caixa PDV.</p></div>';
+    var html = '<div class="admin-view-head"><p class="eyebrow">Base de clientes</p><h2>Clientes</h2><p>Captado assim que a pessoa preenche o telefone na agenda do site, ou registra uma venda no Caixa.</p></div>';
     html += '<div class="adm-client-grid">';
     clientes.forEach(function (c, i) {
       var fb = feedbacks[i] || [];
@@ -514,10 +514,13 @@
         '<div><div class="adm-client-name">' + esc(c.nome || 'Sem nome') + '</div><div class="adm-client-phone">' + esc(c.telefone) + '</div></div>' +
         '<a class="adm-whatsapp-btn" target="_blank" rel="noopener" href="' + waLink(c.telefone) + '" aria-label="Abrir WhatsApp com ' + esc(c.nome || c.telefone) + '">' + WHATSAPP_ICON + '</a>' +
         '</div>' +
+        (c.tem_agendamento ? '<p style="color:var(--adm-gold); font-size:0.78rem; margin-top:0.3rem;">● Tem agendamento marcado</p>' : '') +
         '<div class="adm-client-stats">' +
         '<div><strong>' + c.total_cortes + '</strong><span>Total de cortes</span></div>' +
         '<div><strong>' + c.cortes_este_mes + '</strong><span>Este mês</span></div>' +
+        '<div><strong>' + (c.acessos || 0) + '</strong><span>Acessos à agenda</span></div>' +
         '</div>' +
+        (c.profissional_preferido ? '<p style="color:var(--adm-text-soft); font-size:0.82rem; margin-top:0.5rem;">Prefere: <strong style="color:var(--adm-off-white);">' + esc(c.profissional_preferido) + '</strong></p>' : '') +
         (ultimoFeedback ? '<p class="adm-client-feedback">"' + esc(ultimoFeedback.comentario) + '"</p>' : '<p class="adm-client-feedback-empty">Sem feedback do cliente ainda.</p>') +
         '<form class="adm-feedback-form" data-telefone="' + esc(c.telefone) + '">' +
         '<input type="text" placeholder="Anotar feedback (opcional)">' +

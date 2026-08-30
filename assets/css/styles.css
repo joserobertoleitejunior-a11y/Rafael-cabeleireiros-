@@ -463,12 +463,11 @@ footer.site-footer .foot-col{display:flex; flex-direction:column; gap:0.35rem; m
 .topbar-actions{display:flex; align-items:center; gap:0.6rem;}
 .gender-switch{
   display:inline-flex; align-items:center; gap:0.4rem;
-  padding:0.5rem 0.9rem; border-radius:999px; border:1px solid var(--line-accent);
-  font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--ink-soft);
+  padding:0.5rem 0.9rem; border-radius:999px; border:1px solid #C9A227;
+  font-size:0.72rem; letter-spacing:0.08em; text-transform:uppercase; color:#B08D2F;
   white-space:nowrap;
 }
-.gender-switch:hover, .gender-switch:focus-visible{border-color:#C9A227; color:#B08D2F;}
-.site-topbar.on-hero .gender-switch{border-color:rgba(10,8,4,0.3);}
+.gender-switch:hover, .gender-switch:focus-visible{background:rgba(201,162,39,0.1);}
 
 .gender-gate{
   position:fixed; inset:0; z-index:200;

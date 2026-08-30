@@ -250,6 +250,11 @@
       choices.telefone = saved.telefone;
       if (nomeInput) nomeInput.value = saved.nome;
       if (telefoneInput) telefoneInput.value = saved.telefone;
+      // cliente que já tem contato salvo pula o passo 1 — registra o
+      // acesso aqui mesmo, senão quem só volta nunca contaria de novo
+      if (window.db) {
+        window.db.rpc('registrar_cliente', { p_nome: saved.nome, p_telefone: saved.telefone }).catch(function () { /* offline, sem problema */ });
+      }
     }
     if (welcomeHint) {
       if (isReturningClient) {
@@ -333,6 +338,11 @@
     if (current === STEP_CONTATO) {
       syncContatoFields();
       saveContact(choices.nome, choices.telefone);
+      // já captura o cliente no banco assim que ele preenche os dados —
+      // não precisa esperar terminar o agendamento pra aparecer em Clientes
+      if (window.db) {
+        window.db.rpc('registrar_cliente', { p_nome: choices.nome || '', p_telefone: choices.telefone || '' }).catch(function () { /* offline: sem problema, tenta de novo na próxima visita */ });
+      }
     }
 
     if (current < totalSteps) {

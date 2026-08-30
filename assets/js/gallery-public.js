@@ -14,7 +14,7 @@
   window.db.from('gallery').select('id,foto_url').order('created_at', { ascending: false }).then(function (res) {
     if (res.error || !res.data || !res.data.length) return;
     grid.innerHTML = res.data.map(function (p) {
-      return '<figure><img src="' + esc(p.foto_url) + '" class="tone-bw" alt="Corte feito no Rafael Cabeleireiros"></figure>';
+      return '<figure><img src="' + esc(p.foto_url) + '" alt="Corte feito no Rafael Cabeleireiros"></figure>';
     }).join('');
   }).catch(function () { /* offline: mantém as fotos de referência do HTML */ });
 })();

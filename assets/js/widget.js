@@ -218,7 +218,8 @@
       d.classList.toggle('active', n === current);
       d.classList.toggle('done', n < current);
     });
-    backBtn.disabled = current === 1;
+    // No passo 1 o "Voltar" não fica cinza sem fazer nada — ele fecha o
+    // agendamento e volta pro hero, que é o "voltar" que faz sentido ali.
     nextBtn.textContent = current === totalSteps ? 'Confirmar e enviar no WhatsApp' : 'Continuar';
     // Não usamos o atributo disabled de verdade aqui — em alguns celulares
     // o autopreenchimento do teclado (nome/telefone) não dispara o evento
@@ -347,6 +348,8 @@
       current--;
       render();
       overlay.scrollTop = 0;
+    } else {
+      close();
     }
   });
 

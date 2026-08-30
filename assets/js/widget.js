@@ -305,6 +305,7 @@
     if (current > 1) {
       current--;
       render();
+      overlay.scrollTop = 0;
     }
   });
 
@@ -346,7 +347,14 @@
       render();
       var stepEl = steps[current - 1];
       var vazio = stepEl.querySelector('.field-input[required]');
-      if (vazio) vazio.focus();
+      if (vazio) {
+        // reportValidity mostra a bolha nativa "preencha este campo" e já
+        // rola/foca sozinho — importante porque em alguns celulares o
+        // autopreenchimento mostra o texto na tela sem de fato gravar no
+        // value do campo, e aí um focus() silencioso parecia "não fazer nada".
+        if (vazio.reportValidity) vazio.reportValidity();
+        else vazio.focus();
+      }
       return;
     }
 
@@ -363,6 +371,7 @@
     if (current < totalSteps) {
       current++;
       render();
+      overlay.scrollTop = 0;
       return;
     }
 

@@ -257,6 +257,23 @@
     if (telefoneInput) telefoneInput.addEventListener(evt, function () { syncContatoFields(); render(); });
   });
 
+  // Bug conhecido do Safari/Chrome no celular: um overlay position:fixed
+  // com rolagem própria (que é exatamente o nosso .wizard-overlay) pode
+  // ficar com a área de toque "desalinhada" do que é mostrado na tela
+  // depois que o teclado do celular abre e fecha (ao digitar nome/telefone).
+  // Os botões continuam aparecendo normais, mas o toque neles para de
+  // funcionar — sem erro nenhum, porque visualmente nada muda. O truque
+  // pra forçar o navegador a recalcular é alternar um transform no overlay
+  // assim que o teclado fecha.
+  function forcarRecalculoDeToque() {
+    overlay.style.transform = 'translateZ(0)';
+    window.scrollTo(0, 0);
+    setTimeout(function () { overlay.style.transform = ''; }, 60);
+  }
+  [nomeInput, telefoneInput].forEach(function (inp) {
+    if (inp) inp.addEventListener('blur', function () { setTimeout(forcarRecalculoDeToque, 80); });
+  });
+
   var dadosCarregados = false;
   function open(preselectProf, preselectServico) {
     lastFocused = document.activeElement;

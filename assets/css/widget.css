@@ -104,6 +104,7 @@
 .wizard-nav button{
   flex:1; padding:1.05rem; font-size:1rem;
   letter-spacing:0.01em; cursor:pointer; border-radius:999px; font-weight:500;
+  touch-action:manipulation;
 }
 #wizardBack{background:transparent; border:1.5px solid var(--ink); color:var(--ink);}
 #wizardBack:disabled{opacity:0.35; cursor:default;}

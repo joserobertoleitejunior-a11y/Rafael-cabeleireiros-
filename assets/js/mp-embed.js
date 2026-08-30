@@ -48,7 +48,8 @@
           },
           onError: function (error) {
             console.error('Erro no Payment Brick:', error);
-          }
+          },
+          onReady: function () {}
         }
       });
     });
@@ -83,7 +84,8 @@
           },
           onError: function (error) {
             console.error('Erro no Payment Brick:', error);
-          }
+          },
+          onReady: function () {}
         }
       });
     });

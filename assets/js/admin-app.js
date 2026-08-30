@@ -58,7 +58,7 @@
   }
 
   function applyRoleVisibility() {
-    var ownerOnly = ['dashboard', 'servicos'];
+    var ownerOnly = ['dashboard', 'servicos', 'contrato'];
     $all('.admin-tab').forEach(function (tab) {
       var restrito = ownerOnly.indexOf(tab.dataset.view) !== -1;
       tab.style.display = (restrito && session.role !== 'owner') ? 'none' : '';
@@ -224,6 +224,7 @@
     else if (view === 'clientes') renderClientes();
     else if (view === 'servicos') renderServicos();
     else if (view === 'galeria') renderGaleria();
+    else if (view === 'contrato') renderContrato();
   }
 
   // ----------------------------------------------------------------- PDV
@@ -880,6 +881,117 @@
   // ------------------------------------------------------------- Galeria
   var IG_HANDLE = '@rafael_cabeleireiros';
   var IG_URL = 'https://www.instagram.com/rafael_cabeleireiros';
+
+  // -------------------------------------------------------------- Contrato
+  var MP_ASSINATURA_URL = 'https://fwxwhndjgzwipgpzbnzr.supabase.co/functions/v1/mp-criar-assinatura';
+  var MP_COBRANCA_PIX_URL = 'https://fwxwhndjgzwipgpzbnzr.supabase.co/functions/v1/mp-criar-cobranca-pix';
+  function renderContrato() {
+    var container = $('#view-contrato');
+    loading(container, 'Carregando o contrato…');
+    Store.minhaAssinatura(session.token).then(function (info) {
+      contratoRenderComDados(container, info);
+    }).catch(function (e) { erro(container, e); });
+  }
+
+  function contratoRenderComDados(container, info) {
+    var corStatus = info.status === 'em_dia' ? 'var(--adm-gold)' : info.status === 'atrasado' ? '#E0A84A' : 'var(--adm-danger)';
+    var html = '<div class="admin-view-head"><p class="eyebrow">Contrato</p><h2>Assinatura do sistema</h2>' +
+      '<p>Mensalidade de manutenção — cadastre um cartão pra cobrança automática todo ciclo, ou gere um Pix avulso quando preferir.</p></div>' +
+      '<div class="adm-panel">' +
+      '<h3 style="font-size:1.2rem;">Situação atual</h3>' +
+      '<p style="color:var(--adm-text-soft); margin-top:0.4rem;">Plano ' + esc(info.plano) + ' · ' + fmtBRL(info.valor) + ' · vencimento ' + fmtDayBR(info.vencimento) + '</p>' +
+      '<p style="margin-top:0.3rem; color:' + corStatus + ';">● ' + esc(info.status).toUpperCase() + '</p>' +
+      (info.mp_last_status ? '<p style="font-size:0.82rem; margin-top:0.3rem; color:var(--adm-text-faint);">Mercado Pago: ' + esc(info.mp_last_status) + '</p>' : '') +
+      '</div>' +
+      '<div class="adm-panel">' +
+      '<h3 style="font-size:1.2rem;">Cadastrar cartão (cobrança automática)</h3>' +
+      '<p style="color:var(--adm-text-soft); font-size:0.88rem; margin:0.4rem 0 0.9rem;">O cartão fica registrado no Mercado Pago e a mensalidade é cobrada sozinha todo ciclo, sem precisar fazer nada.</p>' +
+      '<div style="display:flex; gap:0.6rem; flex-wrap:wrap; margin-bottom:0.9rem;">' +
+      '<button type="button" class="adm-btn adm-btn-sm" data-contrato-plano="mensal">Mensal — R$ 149</button>' +
+      '<button type="button" class="adm-btn adm-btn-sm adm-btn-ghost" data-contrato-plano="anual">Anual — R$ 1.390</button>' +
+      '</div>' +
+      '<input class="field-input" type="email" id="contratoEmail" placeholder="Seu e-mail pra confirmar o pagamento" style="max-width:320px;">' +
+      '<div style="margin-top:0.9rem; display:flex; gap:0.6rem; flex-wrap:wrap;">' +
+      '<button type="button" class="adm-btn adm-btn-sm" id="contratoCadastrarCartao" disabled>Escolha um plano acima</button>' +
+      '<button type="button" class="adm-btn adm-btn-sm adm-btn-ghost" id="contratoGerarPix">Gerar Pix desse ciclo (' + fmtBRL(info.valor) + ')</button>' +
+      '</div>' +
+      '<p class="taxa-msg" id="contratoMsg"></p>' +
+      '</div>';
+    container.innerHTML = html;
+
+    var planoEscolhido = null;
+    var botoesPlano = container.querySelectorAll('[data-contrato-plano]');
+    var cadastrarBtn = $('#contratoCadastrarCartao', container);
+    botoesPlano.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        botoesPlano.forEach(function (b) { b.classList.add('adm-btn-ghost'); });
+        btn.classList.remove('adm-btn-ghost');
+        planoEscolhido = btn.getAttribute('data-contrato-plano');
+        cadastrarBtn.disabled = false;
+        cadastrarBtn.textContent = 'Cadastrar cartão (' + (planoEscolhido === 'anual' ? 'Anual' : 'Mensal') + ')';
+      });
+    });
+
+    function pegarEmail(msgEl) {
+      var email = $('#contratoEmail', container).value.trim();
+      if (!email) {
+        msgEl.textContent = 'Preencha o e-mail antes de continuar.';
+        msgEl.className = 'taxa-msg erro';
+        $('#contratoEmail', container).focus();
+        return null;
+      }
+      return email;
+    }
+
+    cadastrarBtn.addEventListener('click', function () {
+      var msgEl = $('#contratoMsg', container);
+      var email = pegarEmail(msgEl);
+      if (!email || !planoEscolhido) return;
+      cadastrarBtn.disabled = true;
+      msgEl.textContent = 'Abrindo o cadastro do cartão…';
+      msgEl.className = 'taxa-msg';
+      fetch(MP_ASSINATURA_URL, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telefone: info.telefone, email: email, plano: planoEscolhido })
+      }).then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+        .then(function (result) {
+          if (!result.ok || !result.data.init_point) throw new Error((result.data && result.data.error) || 'Não deu pra abrir o cadastro agora.');
+          window.open(result.data.init_point, '_blank', 'noopener');
+          msgEl.textContent = 'Abrimos o cadastro do cartão numa nova aba.';
+          msgEl.className = 'taxa-msg';
+          cadastrarBtn.disabled = false;
+        }).catch(function (e) {
+          msgEl.textContent = e.message;
+          msgEl.className = 'taxa-msg erro';
+          cadastrarBtn.disabled = false;
+        });
+    });
+
+    $('#contratoGerarPix', container).addEventListener('click', function () {
+      var btn = this;
+      var msgEl = $('#contratoMsg', container);
+      var email = pegarEmail(msgEl);
+      if (!email) return;
+      btn.disabled = true;
+      msgEl.textContent = 'Gerando o Pix…';
+      msgEl.className = 'taxa-msg';
+      fetch(MP_COBRANCA_PIX_URL, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telefone: info.telefone, email: email })
+      }).then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+        .then(function (result) {
+          if (!result.ok || !result.data.init_point) throw new Error((result.data && result.data.error) || 'Não deu pra gerar o Pix agora.');
+          window.open(result.data.init_point, '_blank', 'noopener');
+          msgEl.textContent = 'Abrimos o Pix numa nova aba.';
+          msgEl.className = 'taxa-msg';
+          btn.disabled = false;
+        }).catch(function (e) {
+          msgEl.textContent = e.message;
+          msgEl.className = 'taxa-msg erro';
+          btn.disabled = false;
+        });
+    });
+  }
 
   function renderGaleria() {
     var container = $('#view-galeria');

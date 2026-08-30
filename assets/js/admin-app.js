@@ -836,7 +836,10 @@
         '<div class="adm-team-name">' + esc(t.nome) + (t.role === 'owner' ? ' <span style="color:var(--adm-gold); font-size:0.7rem;">· DONO</span>' : '') + '</div>' +
         '<div class="adm-team-role">' + esc(t.especialidade || '') + '</div>' +
         '<label class="adm-team-upload">Trocar foto<input type="file" accept="image/*" data-team-photo="' + t.id + '" style="display:block; margin-top:0.3rem;"></label>' +
+        '<div style="display:flex; gap:0.5rem; margin-top:0.5rem; flex-wrap:wrap;">' +
+        '<button type="button" class="adm-btn adm-btn-ghost adm-btn-sm" data-edit-team="' + t.id + '">Editar especialidade</button>' +
         (t.role === 'owner' ? '' : '<button type="button" class="adm-btn adm-btn-danger adm-btn-sm" data-remove-team="' + t.id + '">Remover</button>') +
+        '</div>' +
         '</div>';
     });
     html += '</div><button type="button" class="adm-btn" style="margin-top:1rem;" id="addTeamBtn">+ Adicionar profissional</button>' +
@@ -888,6 +891,12 @@
         if (confirm('Remover este profissional da equipe? O PIN dele para de funcionar.')) {
           Store.removeStaff(session.token, btn.dataset.removeTeam).then(renderServicos).catch(function (e) { alert(e.message); });
         }
+      });
+    });
+    $all('[data-edit-team]', container).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var t = team.filter(function (x) { return x.id === btn.dataset.editTeam; })[0];
+        if (t) openModal(renderTeamEspecialidadeForm(t));
       });
     });
     $('#addTeamBtn', container).addEventListener('click', function () { openModal(renderTeamForm()); });
@@ -983,6 +992,27 @@
       }
       if (file) Store.uploadPhoto(file, 'equipe', 400, 0.85).then(salvar).catch(function (e) { errBox.textContent = e.message; salvarBtn.disabled = false; });
       else salvar(null);
+    });
+    return wrap;
+  }
+
+  // Edição fica só nesse campo mesmo — trocar nome ou PIN exigiria
+  // reabrir o painel pra pessoa de novo, então não vale a complexidade.
+  function renderTeamEspecialidadeForm(t) {
+    var wrap = document.createElement('div');
+    wrap.innerHTML =
+      '<div class="adm-modal-head"><h3>Editar especialidade</h3><button type="button" class="adm-modal-close" id="modalCloseBtn">×</button></div>' +
+      '<div class="adm-field"><label>' + esc(t.nome) + '</label><input id="teamEspEdit" type="text" value="' + esc(t.especialidade || '') + '" placeholder="Ex: Barbeiro · Colorista"></div>' +
+      '<button type="button" class="adm-btn adm-btn-block" id="teamEspSalvar">Salvar</button>' +
+      '<p class="admin-pin-error" id="teamEspFormError" style="margin-top:0.8rem;"></p>';
+    wrap.querySelector('#teamEspSalvar').addEventListener('click', function () {
+      var esp = wrap.querySelector('#teamEspEdit').value.trim();
+      var errBox = wrap.querySelector('#teamEspFormError');
+      var salvarBtn = wrap.querySelector('#teamEspSalvar');
+      salvarBtn.disabled = true;
+      Store.updateStaffEspecialidade(session.token, t.id, esp)
+        .then(function () { closeModal(); renderServicos(); })
+        .catch(function (e) { errBox.textContent = e.message; salvarBtn.disabled = false; });
     });
     return wrap;
   }

@@ -166,6 +166,11 @@
       return unwrap(db().rpc('admin_dashboard_stats', { p_token: token }));
     },
 
+    // ---- taxa de criação do site (pagamento único, separado da mensalidade) ----
+    minhaTaxaCriacao: function (token) {
+      return unwrap(db().rpc('minha_taxa_criacao', { p_token: token }));
+    },
+
     // ---- agenda (qualquer funcionário logado marca/desmarca — validação de
     // horário de funcionamento e de conflito acontece no banco, via trigger) ----
     listAppointments: function (token) {

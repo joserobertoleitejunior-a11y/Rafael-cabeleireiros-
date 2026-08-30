@@ -173,6 +173,9 @@
     minhaAssinatura: function (token) {
       return unwrap(db().rpc('minha_assinatura', { p_token: token }));
     },
+    mpPublicKey: function () {
+      return unwrap(db().rpc('mp_public_key', {}));
+    },
 
     // ---- agenda (qualquer funcionário logado marca/desmarca — validação de
     // horário de funcionamento e de conflito acontece no banco, via trigger) ----

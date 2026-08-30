@@ -78,6 +78,7 @@
     }
     initApp();
     renderTaxaBanner();
+    renderNotificacoes();
   }
 
   // ---------------------------------------------------- taxa de criação
@@ -87,6 +88,7 @@
   // mensalidade de manutenção (R$149, sem desconto), que fica só no
   // painel do operador.
   var MP_TAXA_URL = 'https://fwxwhndjgzwipgpzbnzr.supabase.co/functions/v1/mp-processar-pagamento';
+  var taxaExpandida = false;
   function renderTaxaBanner() {
     var el = $('#taxaBanner');
     if (!el) return;
@@ -94,15 +96,25 @@
 
     Store.minhaTaxaCriacao(session.token).then(function (info) {
       if (info.status === 'pago') {
-        el.innerHTML = '<div class="taxa-banner taxa-ok"><h3>✓ Taxa de criação do site paga</h3>' +
-          '<p>Pago em ' + fmtDayBR(info.pago_em) + (info.valor_pago ? ' — ' + fmtBRL(info.valor_pago) : '') + '. Obrigado!</p></div>';
+        el.innerHTML = '<button type="button" class="taxa-strip taxa-strip-ok">✓ Taxa de criação do site paga</button>';
         return;
       }
 
       var prazoTxt = fmtDayBR(info.prazo_desconto);
       var valorPix = info.dentro_do_prazo ? info.valor_pix_desconto : info.valor_pix;
       var valorCredito = info.dentro_do_prazo ? info.valor_credito_desconto : info.valor_credito;
-      var html = '<div class="taxa-banner">' +
+
+      var stripHtml = '<button type="button" class="taxa-strip" id="taxaToggle">Taxa de criação pendente — ' +
+        (info.dentro_do_prazo ? 'desconto até ' + prazoTxt : 'valor cheio, prazo do desconto passou') +
+        ' · toque pra ver</button>';
+
+      if (!taxaExpandida) {
+        el.innerHTML = stripHtml;
+        $('#taxaToggle').addEventListener('click', function () { taxaExpandida = true; renderTaxaBanner(); });
+        return;
+      }
+
+      var html = stripHtml + '<div class="taxa-banner">' +
         '<h3>Taxa de criação do site</h3>' +
         '<p>Pagamento único e obrigatório pela criação do sistema. Pague até <strong>' + prazoTxt + '</strong> e garanta 10% de desconto em qualquer forma de pagamento. Depois desse prazo, vale o valor cheio.</p>' +
         '<div class="taxa-precos">' +
@@ -121,13 +133,13 @@
         '<p class="taxa-msg" id="taxaMsg"></p>' +
         '</div>';
       el.innerHTML = html;
+      $('#taxaToggle').addEventListener('click', function () { taxaExpandida = false; renderTaxaBanner(); });
 
       function abrirBrick(forma) {
         var msgEl = $('#taxaMsg');
         var brickEl = $('#taxaBrickContainer');
         msgEl.textContent = 'Carregando o pagamento…';
         msgEl.className = 'taxa-msg';
-        brickEl.innerHTML = '';
         Store.mpPublicKey().then(function (publicKey) {
           return RafaelMP.montarPagamento({
             publicKey: publicKey,
@@ -169,6 +181,89 @@
       $('#taxaPagarCredito').addEventListener('click', function () { abrirBrick('credito'); });
     }).catch(function () { el.innerHTML = ''; });
   }
+
+  // -------------------------------------------------- sininho de avisos
+  // Fica num cantinho fixo, discreto, em qualquer aba — clica pra abrir.
+  // Junta agendamentos recentes (todo mundo vê) com avisos de vencimento
+  // de pagamento (só o dono). "Visto" fica salvo no navegador, não no
+  // banco — é só uma conveniência local, não precisa sincronizar.
+  var NOTIF_SEEN_KEY = 'rafaelNotifSeen';
+  function pegarVistos() {
+    try { return JSON.parse(localStorage.getItem(NOTIF_SEEN_KEY) || '[]'); } catch (e) { return []; }
+  }
+  function marcarComoVistos(ids) {
+    try {
+      var vistos = pegarVistos();
+      ids.forEach(function (id) { if (vistos.indexOf(id) === -1) vistos.push(id); });
+      if (vistos.length > 200) vistos = vistos.slice(vistos.length - 200);
+      localStorage.setItem(NOTIF_SEEN_KEY, JSON.stringify(vistos));
+    } catch (e) { /* localStorage indisponível — segue sem lembrar */ }
+  }
+
+  function garantirNotifBell() {
+    if ($('#notifBell')) return;
+    var el = document.createElement('div');
+    el.id = 'notifBell';
+    el.className = 'notif-bell';
+    el.innerHTML =
+      '<button type="button" class="notif-btn" id="notifBtn" aria-label="Notificações">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3a5 5 0 0 0-5 5v3.5c0 .7-.3 1.4-.8 1.9L5 15h14l-1.2-1.6c-.5-.5-.8-1.2-.8-1.9V8a5 5 0 0 0-5-5z"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0"/></svg>' +
+      '<span class="notif-badge" id="notifBadge" hidden>0</span>' +
+      '</button>' +
+      '<div class="notif-panel" id="notifPanel" hidden></div>';
+    document.body.appendChild(el);
+
+    $('#notifBtn').addEventListener('click', function (e) {
+      e.stopPropagation();
+      var panel = $('#notifPanel');
+      var estaFechado = panel.hasAttribute('hidden');
+      if (estaFechado) { panel.removeAttribute('hidden'); marcarNotificacoesVistas(); }
+      else panel.setAttribute('hidden', '');
+    });
+    document.addEventListener('click', function (e) {
+      var bell = $('#notifBell');
+      if (bell && !bell.contains(e.target)) bell.querySelector('.notif-panel').setAttribute('hidden', '');
+    });
+  }
+
+  var ultimaNotifData = null;
+  function renderNotificacoes() {
+    if (!session) return;
+    garantirNotifBell();
+    Store.adminNotificacoes(session.token).then(function (data) {
+      ultimaNotifData = data;
+      var vistos = pegarVistos();
+      var naoVistos = data.agendamentos.filter(function (a) { return vistos.indexOf(a.id) === -1; });
+      var badgeCount = naoVistos.length + (data.avisos_pagamento ? data.avisos_pagamento.length : 0);
+      var badge = $('#notifBadge');
+      if (badgeCount > 0) { badge.textContent = badgeCount > 9 ? '9+' : String(badgeCount); badge.removeAttribute('hidden'); }
+      else badge.setAttribute('hidden', '');
+
+      var html = '<h4>Notificações</h4>';
+      (data.avisos_pagamento || []).forEach(function (aviso) {
+        html += '<div class="notif-aviso">' + esc(aviso) + '</div>';
+      });
+      if (!data.agendamentos.length) {
+        html += '<p class="notif-empty">Nenhum agendamento novo nos últimos dias.</p>';
+      } else {
+        html += data.agendamentos.map(function (a) {
+          return '<div class="notif-item"><strong>' + esc(a.cliente_nome) + '</strong>' +
+            esc(a.servico || '') + (a.staff_nome ? ' com ' + esc(a.staff_nome) : '') + '<br>' +
+            esc(a.dia_label || '') + ' às ' + esc(a.horario || '') + '</div>';
+        }).join('');
+      }
+      $('#notifPanel').innerHTML = html;
+    }).catch(function () { /* silencioso — sininho não é crítico */ });
+  }
+
+  function marcarNotificacoesVistas() {
+    if (ultimaNotifData && ultimaNotifData.agendamentos) {
+      marcarComoVistos(ultimaNotifData.agendamentos.map(function (a) { return a.id; }));
+    }
+    renderNotificacoes();
+  }
+
+  setInterval(function () { renderNotificacoes(); }, 60000);
 
   pinSubmit.addEventListener('click', function () {
     var val = pinInput.value.trim();
@@ -952,7 +1047,6 @@
       var brickEl = $('#contratoCartaoBrick', container);
       msgEl.textContent = 'Carregando o formulário do cartão…';
       msgEl.className = 'taxa-msg';
-      brickEl.innerHTML = '';
       Store.mpPublicKey().then(function (publicKey) {
         return RafaelMP.montarCartaoAssinatura({
           publicKey: publicKey,
@@ -983,7 +1077,6 @@
       var brickEl = $('#contratoPixBrick', container);
       msgEl.textContent = 'Carregando o Pix…';
       msgEl.className = 'taxa-msg';
-      brickEl.innerHTML = '';
       Store.mpPublicKey().then(function (publicKey) {
         return RafaelMP.montarPagamento({
           publicKey: publicKey,

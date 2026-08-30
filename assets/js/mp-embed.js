@@ -18,11 +18,33 @@
     return sdkPromise;
   }
 
+  // Cada container só pode ter UM Brick vivo por vez — trocar de forma
+  // de pagamento (Pix -> cartão, por exemplo) sem desmontar o anterior
+  // direito é o que causava a tela "Ocorreu um erro" e a exceção
+  // removeChild: o Brick guarda referências internas do DOM, e limpar o
+  // container na marra (innerHTML = '') por baixo dele quebra essas
+  // referências. Por isso guardamos o controller de cada container e
+  // sempre chamamos unmount() nele antes de criar um novo, ou antes de
+  // desenhar qualquer coisa nossa (como o QR code do Pix) por cima.
+  var bricksAtivos = {};
+
+  function desmontar(containerId) {
+    var atual = bricksAtivos[containerId];
+    delete bricksAtivos[containerId];
+    if (!atual) return Promise.resolve();
+    try {
+      var resultado = atual.unmount();
+      return resultado && resultado.then ? resultado.catch(function () {}) : Promise.resolve();
+    } catch (e) {
+      return Promise.resolve();
+    }
+  }
+
   // Monta um Payment Brick pra cobrar um valor único agora (taxa de
   // criação, ou Pix avulso da mensalidade). opts: {publicKey, amount,
   // telefone, tipo, forma, edgeUrl, containerId, onResult}
   function montarPagamento(opts) {
-    return carregarSDK().then(function () {
+    return carregarSDK().then(function () { return desmontar(opts.containerId); }).then(function () {
       var mp = new global.MercadoPago(opts.publicKey, { locale: 'pt-BR' });
       return mp.bricks().create('payment', opts.containerId, {
         initialization: { amount: opts.amount },
@@ -40,7 +62,7 @@
             }).then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
               .then(function (result) {
                 if (!result.ok) throw new Error((result.data && result.data.error) || 'Pagamento recusado.');
-                opts.onResult(result.data);
+                return desmontar(opts.containerId).then(function () { opts.onResult(result.data); });
               }).catch(function (e) {
                 opts.onResult({ error: e.message });
                 throw e;
@@ -51,6 +73,9 @@
           },
           onReady: function () {}
         }
+      }).then(function (controller) {
+        bricksAtivos[opts.containerId] = controller;
+        return controller;
       });
     });
   }
@@ -60,7 +85,7 @@
   // redirecionar. opts: {publicKey, telefone, plano, email, valor,
   // edgeUrl, containerId, onResult}
   function montarCartaoAssinatura(opts) {
-    return carregarSDK().then(function () {
+    return carregarSDK().then(function () { return desmontar(opts.containerId); }).then(function () {
       var mp = new global.MercadoPago(opts.publicKey, { locale: 'pt-BR' });
       return mp.bricks().create('payment', opts.containerId, {
         initialization: { amount: opts.valor, payer: { email: opts.email || undefined } },
@@ -76,7 +101,7 @@
             }).then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
               .then(function (result) {
                 if (!result.ok) throw new Error((result.data && result.data.error) || 'Não deu pra cadastrar o cartão.');
-                opts.onResult(result.data);
+                return desmontar(opts.containerId).then(function () { opts.onResult(result.data); });
               }).catch(function (e) {
                 opts.onResult({ error: e.message });
                 throw e;
@@ -87,9 +112,12 @@
           },
           onReady: function () {}
         }
+      }).then(function (controller) {
+        bricksAtivos[opts.containerId] = controller;
+        return controller;
       });
     });
   }
 
-  global.RafaelMP = { montarPagamento: montarPagamento, montarCartaoAssinatura: montarCartaoAssinatura };
+  global.RafaelMP = { montarPagamento: montarPagamento, montarCartaoAssinatura: montarCartaoAssinatura, desmontar: desmontar };
 })(window);

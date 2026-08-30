@@ -31,7 +31,7 @@
   <header class="site-topbar on-hero">
     <a class="brand" href="feminino.html"><span class="brand-mark">❧</span> Rafael <em>Cabeleireiros</em></a>
     <div class="topbar-actions">
-      <a class="gender-switch" href="index.html" data-gender-link="masculino"><span aria-hidden="true">♂</span><span class="gender-switch-label">Área masculina</span></a>
+      <a class="gender-switch" href="index.html" data-gender-link="masculino"><span class="gender-switch-glyph" aria-hidden="true">M</span><span class="gender-switch-label">Área masculina</span></a>
       <button class="hamburger" id="menuOpenBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="siteMenu" aria-label="Abrir menu">
         <span></span><span></span><span></span>
       </button>
@@ -78,18 +78,41 @@
     </section>
 
     <div class="service-strip">
-      <div class="service-badge"><span class="mark"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 6 Q6 14 11 20 Q15 25 11 28"/><path d="M19 6 Q14 14 19 20 Q23 25 19 28"/></svg></span><strong>Corte</strong><span>Feminino</span></div>
-      <div class="service-badge"><span class="mark"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16 6 C16 6 8 16.5 8 21.5 a8 8 0 0 0 16 0 C24 16.5 16 6 16 6 Z"/></svg></span><strong>Coloração</strong><span>e Mechas</span></div>
-      <div class="service-badge"><span class="mark"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 10 h18 v4 h-18 z"/><line x1="9" y1="14" x2="9" y2="24"/><line x1="13" y1="14" x2="13" y2="24"/><line x1="17" y1="14" x2="17" y2="24"/><line x1="21" y1="14" x2="21" y2="24"/><line x1="25" y1="14" x2="25" y2="24"/></svg></span><strong>Escova</strong><span>e Penteados</span></div>
-      <div class="service-badge"><span class="mark"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16 6 L19 14 L27 16 L19 18 L16 26 L13 18 L5 16 L13 14 Z"/></svg></span><strong>Tratamentos</strong><span>Capilares</span></div>
-      <div class="service-badge"><span class="mark"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="11" y="13" width="10" height="14" rx="2"/><rect x="13" y="7" width="6" height="6" rx="1"/></svg></span><strong>Produtos</strong><span>Premium</span></div>
+      <button type="button" class="service-badge" data-open-widget data-preselect-servico="Corte Feminino"><span class="mark"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 6 Q6 14 11 20 Q15 25 11 28"/><path d="M19 6 Q14 14 19 20 Q23 25 19 28"/></svg></span><strong>Corte</strong><span>Feminino</span></button>
+      <button type="button" class="service-badge" data-open-widget data-preselect-servico="Coloração"><span class="mark"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16 6 C16 6 8 16.5 8 21.5 a8 8 0 0 0 16 0 C24 16.5 16 6 16 6 Z"/></svg></span><strong>Coloração</strong><span>e Mechas</span></button>
+      <button type="button" class="service-badge" data-open-widget data-preselect-servico="Escova"><span class="mark"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 10 h18 v4 h-18 z"/><line x1="9" y1="14" x2="9" y2="24"/><line x1="13" y1="14" x2="13" y2="24"/><line x1="17" y1="14" x2="17" y2="24"/><line x1="21" y1="14" x2="21" y2="24"/><line x1="25" y1="14" x2="25" y2="24"/></svg></span><strong>Escova</strong><span>e Penteados</span></button>
+      <button type="button" class="service-badge" data-open-widget data-preselect-servico="Tratamento Capilar"><span class="mark"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16 6 L19 14 L27 16 L19 18 L16 26 L13 18 L5 16 L13 14 Z"/></svg></span><strong>Tratamentos</strong><span>Capilares</span></button>
+      <button type="button" class="service-badge" data-open-catalog><span class="mark"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="11" y="13" width="10" height="14" rx="2"/><rect x="13" y="7" width="6" height="6" rx="1"/></svg></span><strong>Produtos</strong><span>Premium</span></button>
     </div>
 
-    <div class="hero-foot-strip">
-      <span>R. Doutor Julio Prestes, 845, Centro, Itapetininga/SP</span>
-      <a href="tel:+5515996507174">(15) 99650-7174</a>
-    </div>
   </main>
+
+  <footer class="site-footer">
+    <div class="foot-top">
+      <div class="foot-col">
+        <p class="foot-brand"><span class="brand-mark">❧</span> Rafael Cabeleireiros</p>
+        <p>R. Doutor Julio Prestes, 845, Centro</p>
+        <p>Itapetininga/SP</p>
+      </div>
+      <div class="foot-col">
+        <p class="foot-label">Contato</p>
+        <a href="tel:+5515996507174">(15) 99650-7174</a>
+        <a class="foot-social" href="https://www.instagram.com/rafael_cabeleireiros" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="2.5" width="19" height="19" rx="5"/><circle cx="12" cy="12" r="4.3"/><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor" stroke="none"/></svg> @rafael_cabeleireiros</a>
+      </div>
+      <div class="foot-col">
+        <p class="foot-label">Horário</p>
+        <p>Segunda a sábado: 8h às 18h</p>
+        <p>Quinta e sexta: 8h às 19h</p>
+      </div>
+      <div class="foot-col">
+        <p class="foot-label">Navegação</p>
+        <a href="institucional-feminino.html">Site institucional</a>
+        <a href="profissionais-feminino.html">Profissionais</a>
+        <a href="admin.html">Admin</a>
+      </div>
+    </div>
+    <div class="foot-bottom">© 2026 Rafael Cabeleireiros — todos os direitos reservados</div>
+  </footer>
 
   <div class="gender-gate" id="genderGate">
     <div class="gender-gate-box">
@@ -98,7 +121,7 @@
       <p>Separamos a agenda e os serviços pra facilitar — dá pra trocar quando quiser, é só tocar no botão do topo.</p>
       <div class="gender-gate-options">
         <button type="button" class="gender-gate-option" data-gender-escolha="feminino"><span aria-hidden="true">♀</span> Feminino</button>
-        <button type="button" class="gender-gate-option" data-gender-escolha="masculino"><span aria-hidden="true">♂</span> Masculino</button>
+        <button type="button" class="gender-gate-option" data-gender-escolha="masculino"><span class="gender-switch-glyph" aria-hidden="true">M</span> Masculino</button>
       </div>
     </div>
   </div>
@@ -191,9 +214,20 @@
     </div>
   </div>
 
+  <div class="catalog-overlay" id="catalogOverlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Produtos">
+    <div class="catalog-box">
+      <div class="catalog-topline">
+        <p class="eyebrow">Produtos Premium</p>
+        <button class="wizard-close" id="catalogClose" type="button" aria-label="Fechar catálogo">×</button>
+      </div>
+      <div class="catalog-grid" id="catalogGrid"></div>
+    </div>
+  </div>
+
   <script src="assets/js/menu.js"></script>
   <script src="assets/js/supabase-client.js"></script>
   <script src="assets/js/widget.js"></script>
+  <script src="assets/js/products-catalog.js"></script>
   <script src="assets/js/gender-gate.js"></script>
 </body>
 </html>

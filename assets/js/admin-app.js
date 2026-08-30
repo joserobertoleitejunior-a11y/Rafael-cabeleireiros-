@@ -547,12 +547,12 @@
   function renderServicos() {
     var container = $('#view-servicos');
     loading(container, 'Carregando serviços e equipe…');
-    Promise.all([Store.listServices(), Store.listStaff(session.token)]).then(function (results) {
-      servicosRenderComDados(container, results[0], results[1]);
+    Promise.all([Store.listServices(), Store.listStaff(session.token), Store.listProducts()]).then(function (results) {
+      servicosRenderComDados(container, results[0], results[1], results[2]);
     }).catch(function (e) { erro(container, e); });
   }
 
-  function servicosRenderComDados(container, services, team) {
+  function servicosRenderComDados(container, services, team, products) {
     var html = '<div class="admin-view-head"><p class="eyebrow">Gestão</p><h2>Serviços e Valores</h2><p>Preços da casa e quem faz parte da equipe.</p></div>';
 
     html += '<div class="adm-panel"><h3 style="margin-bottom:0.6rem;font-size:1.15rem;">Serviços</h3>';
@@ -565,6 +565,15 @@
         '<button type="button" class="adm-btn adm-btn-danger adm-btn-sm" data-remove-service="' + s.id + '">Remover</button></div>';
     });
     html += '<button type="button" class="adm-btn" style="margin-top:1rem;" id="addServiceBtn">+ Adicionar serviço</button></div>';
+
+    html += '<div class="adm-panel"><h3 style="margin-bottom:0.6rem;font-size:1.15rem;">Produtos (catálogo do site)</h3>';
+    products.forEach(function (p) {
+      html += '<div class="adm-service-row"><span class="adm-service-name">' + esc(p.nome) + '</span>' +
+        '<span class="adm-service-price">' + fmtBRL(p.preco) + '</span>' +
+        '<button type="button" class="adm-btn adm-btn-ghost adm-btn-sm" data-edit-product="' + p.id + '">Editar</button>' +
+        '<button type="button" class="adm-btn adm-btn-danger adm-btn-sm" data-remove-product="' + p.id + '">Remover</button></div>';
+    });
+    html += '<button type="button" class="adm-btn" style="margin-top:1rem;" id="addProductBtn">+ Adicionar produto</button></div>';
 
     html += '<div class="adm-panel"><h3 style="margin-bottom:0.8rem;font-size:1.15rem;">Equipe</h3><div class="adm-team-grid">';
     team.forEach(function (t) {
@@ -602,6 +611,23 @@
       });
     });
     $('#addServiceBtn', container).addEventListener('click', function () { openModal(renderServiceForm(null)); });
+
+    $all('[data-remove-product]', container).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (confirm('Remover este produto do catálogo?')) {
+          Store.removeProduct(session.token, btn.dataset.removeProduct).then(renderServicos).catch(function (e) { alert(e.message); });
+        }
+      });
+    });
+    $all('[data-edit-product]', container).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        Store.listProducts().then(function (products) {
+          var prod = products.filter(function (p) { return p.id === btn.dataset.editProduct; })[0];
+          openModal(renderProductForm(prod));
+        });
+      });
+    });
+    $('#addProductBtn', container).addEventListener('click', function () { openModal(renderProductForm(null)); });
 
     $all('[data-remove-team]', container).forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -642,6 +668,36 @@
       if (!nome) return;
       var acao = service ? Store.updateService(session.token, service.id, nome, preco, categoria) : Store.addService(session.token, nome, preco, categoria);
       acao.then(function () { closeModal(); renderServicos(); }).catch(function (e) { alert(e.message); });
+    });
+    return wrap;
+  }
+
+  function renderProductForm(product) {
+    var wrap = document.createElement('div');
+    wrap.innerHTML =
+      '<div class="adm-modal-head"><h3>' + (product ? 'Editar produto' : 'Novo produto') + '</h3><button type="button" class="adm-modal-close" id="modalCloseBtn">×</button></div>' +
+      '<div class="adm-field"><label>Nome</label><input id="prdNome" type="text" value="' + (product ? esc(product.nome) : '') + '"></div>' +
+      '<div class="adm-field"><label>Descrição (opcional)</label><input id="prdDescricao" type="text" value="' + (product ? esc(product.descricao || '') : '') + '"></div>' +
+      '<div class="adm-field"><label>Preço (R$)</label><input id="prdPreco" type="number" step="0.01" min="0" value="' + (product ? product.preco : '') + '"></div>' +
+      '<div class="adm-field"><label>Foto (opcional)</label><input id="prdFoto" type="file" accept="image/*"></div>' +
+      '<button type="button" class="adm-btn adm-btn-block" id="prdSalvar">Salvar</button>';
+    wrap.querySelector('#prdSalvar').addEventListener('click', function () {
+      var nome = wrap.querySelector('#prdNome').value.trim();
+      var descricao = wrap.querySelector('#prdDescricao').value.trim();
+      var preco = parseFloat(wrap.querySelector('#prdPreco').value) || 0;
+      var file = wrap.querySelector('#prdFoto').files[0];
+      if (!nome) return;
+      var salvar = function (fotoUrl) {
+        var acao = product
+          ? Store.updateProduct(session.token, product.id, nome, descricao, preco, fotoUrl)
+          : Store.addProduct(session.token, nome, descricao, preco, fotoUrl);
+        acao.then(function () { closeModal(); renderServicos(); }).catch(function (e) { alert(e.message); });
+      };
+      if (file) {
+        Store.uploadPhoto(file, 'produtos', 700, 0.82).then(salvar).catch(function (e) { alert('Não deu pra subir a foto: ' + e.message); });
+      } else {
+        salvar(null);
+      }
     });
     return wrap;
   }

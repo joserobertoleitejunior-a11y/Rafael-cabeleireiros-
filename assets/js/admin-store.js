@@ -198,6 +198,20 @@
       }));
     },
 
+    // ---- produtos (leitura pública · escrita: só dono) ----
+    listProducts: function () {
+      return unwrap(db().from('products').select('id,nome,descricao,preco,foto_url').eq('ativo', true).order('created_at'));
+    },
+    addProduct: function (token, nome, descricao, preco, fotoUrl) {
+      return unwrap(db().rpc('admin_add_product', { p_token: token, p_nome: nome, p_descricao: descricao, p_preco: preco, p_foto_url: fotoUrl || null }));
+    },
+    updateProduct: function (token, id, nome, descricao, preco, fotoUrl) {
+      return unwrap(db().rpc('admin_update_product', { p_token: token, p_id: id, p_nome: nome, p_descricao: descricao, p_preco: preco, p_foto_url: fotoUrl || null }));
+    },
+    removeProduct: function (token, id) {
+      return unwrap(db().rpc('admin_remove_product', { p_token: token, p_id: id }));
+    },
+
     uploadPhoto: uploadPhoto
   };
 

@@ -77,6 +77,83 @@
       $all('.admin-view').forEach(function (v) { v.classList.toggle('active', v.id === 'view-pdv'); });
     }
     initApp();
+    renderTaxaBanner();
+  }
+
+  // ---------------------------------------------------- taxa de criação
+  // Mostra sempre, em qualquer aba do admin (só pro dono) — pagamento
+  // único obrigatório após 10 dias de uso, com 10% de desconto se pago
+  // antes do prazo em qualquer forma de pagamento. Separado da
+  // mensalidade de manutenção (R$149, sem desconto), que fica só no
+  // painel do operador.
+  var MP_TAXA_URL = 'https://fwxwhndjgzwipgpzbnzr.supabase.co/functions/v1/mp-criar-taxa';
+  function renderTaxaBanner() {
+    var el = $('#taxaBanner');
+    if (!el) return;
+    if (session.role !== 'owner') { el.innerHTML = ''; return; }
+
+    Store.minhaTaxaCriacao(session.token).then(function (info) {
+      if (info.status === 'pago') {
+        el.innerHTML = '<div class="taxa-banner taxa-ok"><h3>✓ Taxa de criação do site paga</h3>' +
+          '<p>Pago em ' + fmtDayBR(info.pago_em) + (info.valor_pago ? ' — ' + fmtBRL(info.valor_pago) : '') + '. Obrigado!</p></div>';
+        return;
+      }
+
+      var prazoTxt = fmtDayBR(info.prazo_desconto);
+      var html = '<div class="taxa-banner">' +
+        '<h3>Taxa de criação do site</h3>' +
+        '<p>Pagamento único e obrigatório pela criação do sistema. Pague até <strong>' + prazoTxt + '</strong> e garanta 10% de desconto em qualquer forma de pagamento. Depois desse prazo, vale o valor cheio.</p>' +
+        '<div class="taxa-precos">' +
+        '<div class="taxa-preco-item"><span>No cartão em até 5x</span><strong>' +
+        (info.dentro_do_prazo ? '<span class="taxa-de">' + fmtBRL(info.valor_credito) + '</span> ' + fmtBRL(info.valor_credito_desconto) : fmtBRL(info.valor_credito)) +
+        '</strong></div>' +
+        '<div class="taxa-preco-item"><span>No Pix à vista</span><strong>' +
+        (info.dentro_do_prazo ? '<span class="taxa-de">' + fmtBRL(info.valor_pix) + '</span> ' + fmtBRL(info.valor_pix_desconto) : fmtBRL(info.valor_pix)) +
+        '</strong></div>' +
+        '</div>' +
+        '<div class="taxa-acoes">' +
+        '<input class="field-input" type="email" id="taxaEmail" placeholder="Seu e-mail pra confirmar o pagamento">' +
+        '<button type="button" class="adm-btn adm-btn-sm" id="taxaPagarPix">Pagar no Pix</button>' +
+        '<button type="button" class="adm-btn adm-btn-sm adm-btn-ghost" id="taxaPagarCredito">Pagar no cartão 5x</button>' +
+        '</div>' +
+        '<p class="taxa-msg" id="taxaMsg"></p>' +
+        '</div>';
+      el.innerHTML = html;
+
+      function pagar(forma, btn) {
+        var email = $('#taxaEmail').value.trim();
+        var msgEl = $('#taxaMsg');
+        if (!email) {
+          msgEl.textContent = 'Preencha o e-mail antes de continuar.';
+          msgEl.className = 'taxa-msg erro';
+          $('#taxaEmail').focus();
+          return;
+        }
+        btn.disabled = true;
+        msgEl.textContent = 'Abrindo o pagamento…';
+        msgEl.className = 'taxa-msg';
+        fetch(MP_TAXA_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ telefone: info.telefone, email: email, forma: forma })
+        }).then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        }).then(function (result) {
+          if (!result.ok || !result.data.init_point) throw new Error((result.data && result.data.error) || 'Não deu pra abrir o pagamento agora.');
+          window.open(result.data.init_point, '_blank', 'noopener');
+          msgEl.textContent = 'Abrimos o pagamento numa nova aba. Assim que for aprovado, esse aviso some sozinho.';
+          msgEl.className = 'taxa-msg';
+          btn.disabled = false;
+        }).catch(function (e) {
+          msgEl.textContent = e.message || 'Erro ao falar com o Mercado Pago.';
+          msgEl.className = 'taxa-msg erro';
+          btn.disabled = false;
+        });
+      }
+
+      $('#taxaPagarPix').addEventListener('click', function () { pagar('pix', this); });
+      $('#taxaPagarCredito').addEventListener('click', function () { pagar('credito', this); });
+    }).catch(function () { el.innerHTML = ''; });
   }
 
   pinSubmit.addEventListener('click', function () {

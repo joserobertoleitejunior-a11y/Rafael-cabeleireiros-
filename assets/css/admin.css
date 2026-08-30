@@ -29,6 +29,22 @@
 .admin-page button{ font-family:inherit; -webkit-appearance:none; appearance:none; touch-action:manipulation; }
 .admin-page input, .admin-page select{ font-family:inherit; }
 
+.taxa-banner{
+  margin:1rem 5vw 0; padding:1.1rem 1.3rem; border-radius:var(--adm-radius);
+  border:1px solid var(--adm-gold-soft); background:var(--adm-gold-bg);
+}
+.taxa-banner.taxa-ok{border-color:rgba(120,168,110,0.4); background:rgba(120,168,110,0.08);}
+.taxa-banner h3{font-size:1.1rem; margin-bottom:0.3rem;}
+.taxa-banner p{color:var(--adm-text-soft); font-size:0.88rem; line-height:1.5; margin:0.2rem 0;}
+.taxa-banner .taxa-precos{display:flex; gap:1.4rem; flex-wrap:wrap; margin:0.7rem 0;}
+.taxa-banner .taxa-preco-item strong{display:block; font-size:1.15rem; color:var(--adm-gold);}
+.taxa-banner .taxa-preco-item span{font-size:0.78rem; color:var(--adm-text-faint);}
+.taxa-banner .taxa-preco-item .taxa-de{text-decoration:line-through; color:var(--adm-text-faint); font-weight:400; font-size:0.9rem;}
+.taxa-banner .taxa-acoes{display:flex; gap:0.7rem; flex-wrap:wrap; margin-top:0.9rem; align-items:center;}
+.taxa-banner input.field-input{max-width:260px;}
+.taxa-banner .taxa-msg{font-size:0.85rem; margin-top:0.6rem;}
+.taxa-banner .taxa-msg.erro{color:var(--adm-danger);}
+
 /* ---------- PIN ---------- */
 .admin-pin-screen{
   min-height:100vh; min-height:100svh;

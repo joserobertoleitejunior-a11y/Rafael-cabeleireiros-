@@ -22,7 +22,7 @@
   // ferramentas de desenvolvedor) se o arquivo novo carregou e se o clique
   // em Continuar está sendo recebido. Remover assim que confirmarmos a
   // causa do agendamento que trava sem aviso em alguns celulares.
-  var DEBUG_BUILD = '20260830e';
+  var DEBUG_BUILD = '20260830g';
   var debugBadge = document.createElement('div');
   debugBadge.id = 'wizardDebugBadge';
   debugBadge.style.cssText = 'position:fixed;bottom:6px;right:6px;font-size:10px;line-height:1.4;' +

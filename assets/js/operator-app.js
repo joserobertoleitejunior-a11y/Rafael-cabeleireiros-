@@ -32,6 +32,13 @@
     if (d.length && d.slice(0, 2) !== '55') d = '55' + d;
     return 'https://wa.me/' + d + '?text=' + encodeURIComponent(msg);
   }
+  function linkAssinatura(sub) {
+    return 'https://joserobertoleitejunior-a11y.github.io/Rafael-cabeleireiros-/assinar.html?tel=' + encodeURIComponent(digitsOnly(sub.cliente_telefone));
+  }
+  function mensagemPagamento(sub) {
+    var primeiro = (sub.cliente_nome || '').split(' ')[0];
+    return 'Oi ' + primeiro + '! Segue o link pra pagar a assinatura do sistema pelo Mercado Pago — você escolhe mensal (R$149) ou anual (R$1.390) na hora: ' + linkAssinatura(sub);
+  }
 
   var pinScreen = document.getElementById('pinScreen');
   var pinInput = document.getElementById('pinInput');
@@ -117,10 +124,13 @@
           '<div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.6rem;">' +
           '<div><h3 style="font-size:1.3rem;">' + esc(s.cliente_nome) + '</h3>' +
           '<p style="color:var(--adm-text-soft); font-size:0.88rem; margin-top:0.3rem;">Plano ' + esc(s.plano) + ' · ' + fmtBRL(s.valor) + ' · vencimento ' + fmtDateBR(s.vencimento) + '</p>' +
-          '<p style="font-size:0.82rem; margin-top:0.2rem; color:' + badgeCor(s.status) + ';">● ' + esc(s.status).toUpperCase() + ' — ' + diasTexto + '</p></div>' +
+          '<p style="font-size:0.82rem; margin-top:0.2rem; color:' + badgeCor(s.status) + ';">● ' + esc(s.status).toUpperCase() + ' — ' + diasTexto + '</p>' +
+          (s.mp_last_status ? '<p style="font-size:0.78rem; margin-top:0.2rem; color:var(--adm-text-faint);">Mercado Pago: ' + esc(s.mp_last_status) + '</p>' : '') +
+          '</div>' +
           '</div>' +
           '<div style="display:flex; gap:0.6rem; flex-wrap:wrap; margin-top:1rem;">' +
-          '<a class="adm-btn adm-btn-sm" target="_blank" rel="noopener" href="' + waLink(s.cliente_telefone, mensagemPara(s, dias)) + '">Avisar no WhatsApp</a>' +
+          '<a class="adm-btn adm-btn-sm" target="_blank" rel="noopener" href="' + waLink(s.cliente_telefone, mensagemPagamento(s)) + '">Enviar link de pagamento</a>' +
+          '<a class="adm-btn adm-btn-ghost adm-btn-sm" target="_blank" rel="noopener" href="' + waLink(s.cliente_telefone, mensagemPara(s, dias)) + '">Avisar no WhatsApp</a>' +
           '<button type="button" class="adm-btn adm-btn-ghost adm-btn-sm" data-marcar-pago="' + s.id + '">Marcar como pago</button>' +
           (s.status !== 'bloqueado'
             ? '<button type="button" class="adm-btn adm-btn-danger adm-btn-sm" data-set-status="' + s.id + '" data-status="bloqueado">Bloquear acesso</button>'

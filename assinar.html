@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script>
+(function () {
+  // Autocorreção de cache — mesmo mecanismo das outras páginas do site.
+  try {
+    if (sessionStorage.getItem('rafaelFreshLoad')) return;
+    sessionStorage.setItem('rafaelFreshLoad', '1');
+    if (location.protocol.indexOf('http') !== 0) return;
+    var u = new URL(location.href);
+    if (u.searchParams.has('_r')) return;
+    u.searchParams.set('_r', Date.now().toString(36));
+    location.replace(u.toString());
+  } catch (e) { /* sessionStorage bloqueado — segue sem forçar */ }
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no, date=no, address=no">
+<title>Assinatura — Rafael Cabeleireiros</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#121110">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23121110'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle' fill='%23C9A227'%3E%24%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/admin.css?v=20260830h">
+<style>
+  .assinar-wrap{max-width:460px; margin:0 auto; padding:4rem 6vw;}
+  .assinar-wrap h1{font-size:1.6rem; margin-bottom:0.4rem;}
+  .assinar-wrap p.hint{color:var(--ink-soft,#8a8378); margin-bottom:2rem;}
+  .plano-opcoes{display:grid; gap:1rem; margin-bottom:1.6rem;}
+  .plano-card{
+    border:1.5px solid #3a352c; border-radius:14px; padding:1.2rem 1.4rem;
+    cursor:pointer; background:#1c1a16; color:#f4efe6; text-align:left;
+    font-family:inherit; display:flex; justify-content:space-between; align-items:center; gap:1rem;
+  }
+  .plano-card strong{display:block; font-size:1.1rem;}
+  .plano-card span{color:#a89a72; font-size:0.85rem;}
+  .plano-card .preco{font-size:1.3rem; font-weight:600; color:#C9A227; white-space:nowrap;}
+  .plano-card.selected{border-color:#C9A227; background:#26221a;}
+  .assinar-msg{margin-top:1rem; font-size:0.9rem;}
+  .assinar-msg.erro{color:#e08a7d;}
+  .assinar-msg.ok{color:#8fbf8a;}
+</style>
+</head>
+<body class="admin-page">
+  <div class="assinar-wrap">
+    <span class="brand-mark">❧</span>
+    <h1>Assinatura do sistema</h1>
+    <p class="hint">Rafael Cabeleireiros — escolha o plano e confirme pra manter o painel liberado.</p>
+
+    <div class="plano-opcoes">
+      <button type="button" class="plano-card" data-plano="mensal">
+        <span><strong>Mensal</strong><span>Renovação todo mês</span></span>
+        <span class="preco">R$ 149</span>
+      </button>
+      <button type="button" class="plano-card" data-plano="anual">
+        <span><strong>Anual</strong><span>Renovação uma vez por ano</span></span>
+        <span class="preco">R$ 1.390</span>
+      </button>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="emailInput">Seu e-mail (o Mercado Pago pede pra confirmar o pagamento)</label>
+      <input class="field-input" type="email" id="emailInput" placeholder="seuemail@exemplo.com" autocomplete="email" required>
+    </div>
+
+    <button class="adm-btn adm-btn-block" id="pagarBtn" type="button" style="margin-top:1.4rem;" disabled>Escolha um plano</button>
+    <p class="assinar-msg" id="assinarMsg"></p>
+  </div>
+
+  <script>
+  (function () {
+    var FUNCTION_URL = 'https://fwxwhndjgzwipgpzbnzr.supabase.co/functions/v1/mp-criar-assinatura';
+    var params = new URLSearchParams(location.search);
+    var telefone = params.get('tel') || '5515996507174';
+
+    var planoSelecionado = null;
+    var cards = document.querySelectorAll('.plano-card');
+    var pagarBtn = document.getElementById('pagarBtn');
+    var emailInput = document.getElementById('emailInput');
+    var msgEl = document.getElementById('assinarMsg');
+
+    cards.forEach(function (card) {
+      card.addEventListener('click', function () {
+        cards.forEach(function (c) { c.classList.remove('selected'); });
+        card.classList.add('selected');
+        planoSelecionado = card.getAttribute('data-plano');
+        pagarBtn.disabled = false;
+        pagarBtn.textContent = 'Ir pro pagamento (' + (planoSelecionado === 'anual' ? 'Anual — R$ 1.390' : 'Mensal — R$ 149') + ')';
+      });
+    });
+
+    pagarBtn.addEventListener('click', function () {
+      var email = emailInput.value.trim();
+      if (!planoSelecionado) return;
+      if (!email) {
+        msgEl.textContent = 'Preencha o e-mail antes de continuar.';
+        msgEl.className = 'assinar-msg erro';
+        emailInput.focus();
+        return;
+      }
+      pagarBtn.disabled = true;
+      pagarBtn.textContent = 'Abrindo o pagamento…';
+      msgEl.textContent = '';
+      msgEl.className = 'assinar-msg';
+
+      fetch(FUNCTION_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ telefone: telefone, email: email, plano: planoSelecionado })
+      }).then(function (res) {
+        return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+      }).then(function (result) {
+        if (!result.ok || !result.data.init_point) {
+          throw new Error((result.data && result.data.error) || 'Não deu pra abrir o pagamento agora.');
+        }
+        window.location.href = result.data.init_point;
+      }).catch(function (e) {
+        msgEl.textContent = e.message || 'Erro ao falar com o Mercado Pago. Tenta de novo em instantes.';
+        msgEl.className = 'assinar-msg erro';
+        pagarBtn.disabled = false;
+        pagarBtn.textContent = 'Tentar de novo';
+      });
+    });
+  })();
+  </script>
+</body>
+</html>

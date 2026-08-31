@@ -1137,12 +1137,32 @@
   function renderContrato() {
     var container = $('#view-contrato');
     loading(container, 'Carregando o contrato…');
-    Store.minhaAssinatura(session.token).then(function (info) {
-      contratoRenderComDados(container, info);
+    Promise.all([
+      Store.minhaAssinatura(session.token),
+      Store.listarComprovantes(session.token).catch(function () { return []; })
+    ]).then(function (results) {
+      contratoRenderComDados(container, results[0], results[1]);
     }).catch(function (e) { erro(container, e); });
   }
 
-  function contratoRenderComDados(container, info) {
+  function comprovantesHtml(pagamentos) {
+    if (!pagamentos || !pagamentos.length) {
+      return '<p style="color:var(--adm-text-soft); font-size:0.88rem;">Nenhum comprovante ainda — assim que um pagamento for aprovado, ele aparece aqui sozinho.</p>';
+    }
+    var linhas = pagamentos.map(function (p) {
+      var tipoLabel = p.tipo === 'taxa_criacao' ? 'Taxa de criação' : 'Mensalidade';
+      var formaLabel = p.forma === 'pix' ? 'Pix' : p.forma === 'credito' ? 'Cartão' : (p.forma || 'forma não informada');
+      return '<div class="adm-hist-row">' +
+        '<div><div class="adm-hist-main">' + esc(tipoLabel) + '</div>' +
+        '<div class="adm-hist-sub">' + fmtDayBR(p.criado_em.slice(0, 10)) + ' · ' + esc(formaLabel) +
+        (p.mp_payment_id ? ' · ID ' + esc(p.mp_payment_id) : '') + '</div></div>' +
+        '<div class="adm-hist-value">' + fmtBRL(p.valor) + '</div>' +
+        '</div>';
+    }).join('');
+    return '<div class="adm-hist-list">' + linhas + '</div>';
+  }
+
+  function contratoRenderComDados(container, info, pagamentos) {
     var corStatus = info.status === 'em_dia' ? 'var(--adm-gold)' : info.status === 'atrasado' ? '#E0A84A' : 'var(--adm-danger)';
     var html = '<div class="admin-view-head"><p class="eyebrow">Contrato</p><h2>Assinatura do sistema</h2>' +
       '<p>Mensalidade de manutenção — cadastre um cartão pra cobrança automática todo ciclo, ou gere um Pix avulso quando preferir. Tudo sem sair dessa tela.</p></div>' +
@@ -1168,6 +1188,11 @@
       '<button type="button" class="adm-btn adm-btn-sm adm-btn-ghost" id="contratoGerarPix">Gerar Pix (' + fmtBRL(info.valor) + ')</button>' +
       '<div id="contratoPixBrick" style="margin-top:1rem;"></div>' +
       '<p class="taxa-msg" id="contratoPixMsg"></p>' +
+      '</div>' +
+      '<div class="adm-panel">' +
+      '<h3 style="font-size:1.2rem;">Comprovantes</h3>' +
+      '<p style="color:var(--adm-text-soft); font-size:0.88rem; margin:0.4rem 0 0.9rem;">Todo pagamento aprovado (taxa de criação, mensalidade ou Pix avulso) fica registrado aqui, direto do Mercado Pago.</p>' +
+      comprovantesHtml(pagamentos) +
       '</div>';
     container.innerHTML = html;
 

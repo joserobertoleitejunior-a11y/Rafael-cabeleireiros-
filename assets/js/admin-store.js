@@ -179,6 +179,9 @@
     mpPublicKey: function () {
       return unwrap(db().rpc('mp_public_key', {}));
     },
+    listarComprovantes: function (token) {
+      return unwrap(db().rpc('admin_list_pagamentos', { p_token: token }));
+    },
     adminNotificacoes: function (token) {
       return unwrap(db().rpc('admin_notificacoes', { p_token: token }));
     },

@@ -185,6 +185,16 @@
 .adm-field select::-ms-expand{display:none;}
 .adm-field-row{display:flex; gap:0.8rem;}
 .adm-field-row .adm-field{flex:1; min-width:0;}
+
+/* ---------- Escolher foto (substitui o botão cru do navegador) ---------- */
+.adm-photo-picker{
+  position:relative; display:flex; align-items:center; gap:0.7rem;
+  padding:0.85rem 1rem; background:var(--adm-panel-alt); border:1px dashed var(--adm-gold-soft);
+  border-radius:10px; color:var(--adm-text-soft); font-size:0.92rem; cursor:pointer;
+}
+.adm-photo-picker svg{width:20px; height:20px; color:var(--adm-gold); flex-shrink:0;}
+.adm-photo-picker:hover{border-color:var(--adm-gold);}
+.adm-photo-picker input[type="file"]{position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;}
 @media (max-width:480px){
   .adm-field-row{flex-direction:column; gap:1rem;}
 }
@@ -316,6 +326,24 @@
   background:var(--adm-panel); border:1px solid var(--adm-gold-soft); border-radius:var(--adm-radius);
   padding:1.2rem; text-align:center; display:flex; flex-direction:column; align-items:center; gap:0.6rem;
 }
+.adm-photo-actions{display:flex; align-items:center; justify-content:center; gap:0.5rem;}
+.adm-photo-upload{
+  position:relative; display:inline-flex; align-items:center; justify-content:center;
+  width:38px; height:38px; border-radius:50%; border:1px solid var(--adm-gold-soft);
+  background:var(--adm-panel-alt); color:var(--adm-gold); cursor:pointer;
+}
+.adm-photo-upload svg{width:17px; height:17px;}
+.adm-photo-upload:hover{border-color:var(--adm-gold); background:var(--adm-gold-bg);}
+.adm-photo-upload input[type="file"]{
+  position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;
+}
+.adm-photo-remove{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:38px; height:38px; border-radius:50%; border:1px solid var(--adm-gold-soft);
+  background:var(--adm-panel-alt); color:var(--adm-text-soft); cursor:pointer;
+}
+.adm-photo-remove svg{width:15px; height:15px;}
+.adm-photo-remove:hover{border-color:var(--adm-danger); color:var(--adm-danger);}
 .adm-team-photo{
   width:76px; height:76px; border-radius:50%; object-fit:cover; border:1px solid var(--adm-gold-soft);
 }

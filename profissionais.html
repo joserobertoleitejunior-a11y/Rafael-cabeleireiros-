@@ -16,7 +16,7 @@
   // e força uma busca garantidamente nova — com um parâmetro que essa
   // versão específica nunca teve antes — ignorando qualquer cache no
   // caminho (celular, GitHub Pages, proxy).
-  var BUILD = '20260830u';
+  var BUILD = '20260830w';
   try {
     if (location.protocol.indexOf('http') !== 0) return;
     if (localStorage.getItem('rafaelBuildSeen') === BUILD) return;
@@ -44,8 +44,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/styles.css?v=20260830u">
-<link rel="stylesheet" href="assets/css/widget.css?v=20260830u">
+<link rel="stylesheet" href="assets/css/styles.css?v=20260830w">
+<link rel="stylesheet" href="assets/css/widget.css?v=20260830w">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body data-genero="masculino">
@@ -96,42 +96,8 @@
         <p>Cada carta abaixo é um profissional — a foto, a experiência e o que ele faz de melhor. Toque em "Agendar" pra já abrir a agenda com ele pré-selecionado.</p>
       </div>
 
-      <div class="team-grid">
-        <article class="pro-card boiserie" data-staff="Rafael Souza">
-          <div class="pro-photo">
-            <img src="assets/img/placeholder-portrait.svg" class="tone-bw" alt="Rafael Souza, cabeleireiro principal">
-            <div class="pro-seal"><strong>14</strong><span>anos</span></div>
-          </div>
-          <div class="pro-body">
-            <p class="eyebrow">Fundador · Master Barber</p>
-            <h3>Rafael Souza</h3>
-            <p class="bio">Especialista em cortes clássicos e navalha, formado em barbearia clássica europeia. É quem abriu as portas da casa em 2012.</p>
-            <div class="pro-stats">
-              <div class="pro-stat"><strong>3.480</strong><span>cortes realizados</span></div>
-              <div class="pro-stat"><strong>4.9</strong><span>avaliação média</span></div>
-            </div>
-            <div class="pro-tags"><span class="pro-tag">Navalha</span><span class="pro-tag">Degradê</span><span class="pro-tag">Barba</span></div>
-            <button class="btn btn-sm" type="button" data-open-widget data-preselect-prof="Rafael Souza">Agendar com Rafael →</button>
-          </div>
-        </article>
-
-        <article class="pro-card reverse boiserie" data-staff="Carla Menezes">
-          <div class="pro-photo">
-            <img src="assets/img/placeholder-portrait.svg" class="tone-bw" alt="Carla Menezes, colorista">
-            <div class="pro-seal"><strong>6</strong><span>anos</span></div>
-          </div>
-          <div class="pro-body">
-            <p class="eyebrow">Colorista &amp; Tratamentos</p>
-            <h3>Carla Menezes</h3>
-            <p class="bio">Referência em coloração natural e mechas, com especialização em Paris. Também cuida dos tratamentos capilares da casa.</p>
-            <div class="pro-stats">
-              <div class="pro-stat"><strong>1.920</strong><span>cortes realizados</span></div>
-              <div class="pro-stat"><strong>5.0</strong><span>avaliação média</span></div>
-            </div>
-            <div class="pro-tags"><span class="pro-tag">Coloração</span><span class="pro-tag">Mechas</span><span class="pro-tag">Botox capilar</span></div>
-            <button class="btn btn-sm" type="button" data-open-widget data-preselect-prof="Carla Menezes">Agendar com Carla →</button>
-          </div>
-        </article>
+      <div class="team-grid" id="teamGrid" data-team-variant="full">
+        <p class="team-empty">Carregando a equipe…</p>
       </div>
     </section>
   </main>
@@ -247,10 +213,10 @@
     </div>
   </div>
 
-  <script src="assets/js/menu.js?v=20260830u"></script>
-  <script src="assets/js/supabase-client.js?v=20260830u"></script>
-  <script src="assets/js/team-sync.js?v=20260830u"></script>
-  <script src="assets/js/widget.js?v=20260830u"></script>
-  <script src="assets/js/gender-gate.js?v=20260830u"></script>
+  <script src="assets/js/menu.js?v=20260830w"></script>
+  <script src="assets/js/supabase-client.js?v=20260830w"></script>
+  <script src="assets/js/team-sync.js?v=20260830w"></script>
+  <script src="assets/js/widget.js?v=20260830w"></script>
+  <script src="assets/js/gender-gate.js?v=20260830w"></script>
 </body>
 </html>

@@ -307,12 +307,14 @@ body.scroll-locked{position:fixed; left:0; right:0; overflow:hidden;}
 .sobre-bg-wash{position:absolute; inset:0; background:var(--linen); opacity:0.38; z-index:0;}
 .sobre-bg-copy{position:relative; z-index:1; max-width:58ch; padding:5rem 6vw;}
 @media (max-width:700px){
-  .sobre-bg{min-height:auto;}
+  .sobre-bg{min-height:46vh;}
+  .sobre-bg-photo{filter:blur(4px) saturate(0.96) brightness(1.03); background-position:center 20%;}
   .sobre-bg-copy{padding:3.6rem 6vw 3rem;}
 }
 
 /* ---------- Prévia da equipe (página institucional) ---------- */
 .team-preview-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.6rem;}
+.team-empty{grid-column:1/-1; text-align:center; color:var(--ink-soft); padding:2.4rem 0;}
 .team-preview-card{
   background:var(--white); border:1px solid var(--stone); border-radius:var(--radius);
   padding:1.8rem 1.4rem; text-align:center;

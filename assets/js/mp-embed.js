@@ -46,8 +46,13 @@
   function descreverErroBrick(error) {
     if (!error) return 'Erro desconhecido no formulário de pagamento.';
     if (typeof error === 'string') return error;
-    if (error.cause && error.cause.length) {
-      return error.cause.map(function (c) { return c.description || c.code || JSON.stringify(c); }).join(' · ');
+    if (Array.isArray(error.cause) && error.cause.length) {
+      var partes = error.cause.map(function (c) {
+        if (!c) return '';
+        if (typeof c === 'string') return c;
+        return c.description || c.message || c.code || '';
+      }).filter(Boolean);
+      if (partes.length) return partes.join(' · ');
     }
     if (error.message) return error.message;
     try { return JSON.stringify(error).slice(0, 300); } catch (e) { return 'Erro no formulário de pagamento (sem detalhes).'; }

@@ -66,14 +66,14 @@
       var mp = new global.MercadoPago(opts.publicKey, { locale: 'pt-BR' });
       return mp.bricks().create('payment', opts.containerId, {
         initialization: { amount: opts.amount },
+        // Esse Brick não aceita "excluded" em NENHUM método (testado com
+        // debitCard, ticket, bankTransfer e creditCard — todos recusam,
+        // só "all" é aceito). Então só informamos a opção que queremos
+        // mostrar, sem tentar excluir as outras.
         customization: {
-          // "debitCard" e "ticket" (boleto) não aceitam o valor "excluded"
-          // nesse Brick (o Mercado Pago recusa a configuração inteira se
-          // qualquer um dos dois estiver aqui) — por isso ficam de fora;
-          // podem aparecer como opção, mas cartão/Pix seguem restritos.
           paymentMethods: opts.forma === 'pix'
-            ? { bankTransfer: 'all', creditCard: 'excluded' }
-            : { creditCard: 'all', bankTransfer: 'excluded' }
+            ? { bankTransfer: 'all' }
+            : { creditCard: 'all' }
         },
         callbacks: {
           onSubmit: function (formData) {
@@ -117,7 +117,7 @@
       return mp.bricks().create('payment', opts.containerId, {
         initialization: { amount: opts.valor, payer: { email: opts.email || undefined } },
         customization: {
-          paymentMethods: { creditCard: 'all', bankTransfer: 'excluded', maxInstallments: 1 }
+          paymentMethods: { creditCard: 'all', maxInstallments: 1 }
         },
         callbacks: {
           onSubmit: function (formData) {

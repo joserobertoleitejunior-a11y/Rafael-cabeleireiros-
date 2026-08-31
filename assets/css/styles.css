@@ -302,7 +302,7 @@ body.scroll-locked{position:fixed; left:0; right:0; overflow:hidden;}
 .sobre-bg{padding:3.6rem 6vw 4.2rem; text-align:center;}
 .sobre-bg-photo-wrap{
   position:relative; overflow:hidden; isolation:isolate;
-  width:100%; max-width:460px; aspect-ratio:900/1353;
+  width:100%; max-width:660px; aspect-ratio:900/1353;
   margin:0 auto 2.2rem;
 }
 .sobre-bg-photo-sharp, .sobre-bg-photo-blur{

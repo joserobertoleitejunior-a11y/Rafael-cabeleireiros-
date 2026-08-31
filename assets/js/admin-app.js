@@ -694,13 +694,38 @@
     loading(container, 'Calculando o mês…');
     Promise.all([
       Store.dashboardStats(session.token),
-      Store.listClients(session.token).catch(function () { return []; })
+      Store.listClients(session.token).catch(function () { return []; }),
+      Store.statsVisitas(session.token).catch(function () { return []; })
     ]).then(function (results) {
-      dashboardRenderComDados(container, results[0], results[1]);
+      dashboardRenderComDados(container, results[0], results[1], results[2]);
     }).catch(function (e) { erro(container, e); });
   }
 
-  function dashboardRenderComDados(container, stats, clientes) {
+  var PAGINA_LABEL = {
+    'home-masculino': 'Home (masculino)',
+    'home-feminino': 'Home (feminino)',
+    'institucional-masculino': 'Institucional (masculino)',
+    'institucional-feminino': 'Institucional (feminino)',
+    'profissionais-masculino': 'Equipe (masculino)',
+    'profissionais-feminino': 'Equipe (feminino)',
+    'agendamento-masculino': 'Agendamento aberto (masculino)',
+    'agendamento-feminino': 'Agendamento aberto (feminino)',
+    'meu-agendamento': 'Meu agendamento'
+  };
+
+  function visitasHtml(visitas) {
+    if (!visitas || !visitas.length) {
+      return '<p style="color:var(--adm-text-faint); font-size:0.88rem;">Nenhum acesso registrado ainda.</p>';
+    }
+    var linhas = visitas.map(function (v) {
+      return '<div class="adm-hist-row"><div><div class="adm-hist-main">' + esc(PAGINA_LABEL[v.pagina] || v.pagina) + '</div>' +
+        '<div class="adm-hist-sub">' + v.ultimos_7_dias + ' nos últimos 7 dias</div></div>' +
+        '<div class="adm-hist-value">' + v.total + '</div></div>';
+    }).join('');
+    return '<div class="adm-hist-list">' + linhas + '</div>';
+  }
+
+  function dashboardRenderComDados(container, stats, clientes, visitas) {
     var html = '';
     html += '<div class="admin-view-head"><p class="eyebrow">Visão geral</p><h2>Dashboard</h2><p>Números deste mês, direto do que passou pelo Caixa PDV.</p></div>';
 
@@ -710,7 +735,11 @@
       '<div class="adm-stat-tile"><div class="label">Ticket médio</div><div class="value">' + fmtBRL(stats.ticketMedio) + '</div></div>' +
       '</div>';
 
-    html += '<div class="adm-panel" style="margin-top:1.2rem;"><h3 style="margin-bottom:0.6rem;font-size:1.1rem;">Quem cortou este mês</h3><div id="chartBarbeiro"></div></div>';
+    html += '<div class="adm-panel" style="margin-top:1.2rem;"><h3 style="margin-bottom:0.4rem;font-size:1.1rem;">Acessos por área</h3>' +
+      '<p style="color:var(--adm-text-soft); font-size:0.82rem; margin-bottom:0.6rem;">Total de vezes que cada área do site foi aberta, desde o início.</p>' +
+      visitasHtml(visitas) + '</div>';
+
+    html += '<div class="adm-panel"><h3 style="margin-bottom:0.6rem;font-size:1.1rem;">Quem cortou este mês</h3><div id="chartBarbeiro"></div></div>';
     html += '<div class="adm-panel"><h3 style="margin-bottom:0.6rem;font-size:1.1rem;">Ganhos por dia</h3><div id="chartGanhos"></div></div>';
 
     html += '<div class="adm-panel"><h3 style="margin-bottom:0.4rem;font-size:1.1rem;">Histórico de cortes</h3>';

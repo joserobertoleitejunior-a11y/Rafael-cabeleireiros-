@@ -30,6 +30,10 @@
   var closeBtn = document.getElementById('wizardClose');
   var backBtn = document.getElementById('wizardBack');
   var nextBtn = document.getElementById('wizardNext');
+  var wizardNav = overlay.querySelector('.wizard-nav');
+  var successEl = document.getElementById('wizardSuccess');
+  var successCloseBtn = document.getElementById('wizardSuccessClose');
+  var whatsappLink = document.getElementById('wizardWhatsappLink');
   var welcomeHint = document.getElementById('welcomeBackHint');
   var nomeInput = document.getElementById('clienteNome');
   var telefoneInput = document.getElementById('clienteTelefone');
@@ -294,6 +298,7 @@
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
     lockScroll();
+    if (window.RafaelAnalytics) window.RafaelAnalytics.registrar('agendamento-' + window.RafaelAnalytics.genero());
 
     if (!dadosCarregados) {
       carregarProfissionaisEServicos();
@@ -332,17 +337,40 @@
     if (closeBtn) closeBtn.focus();
   }
 
+  // Mostra a tela de sucesso no lugar do passo "Confirmar" — nada de
+  // window.open aqui: no iPhone, um popup aberto depois de um await (a
+  // gravação no banco) sempre é bloqueado pelo Safari, porque não conta
+  // mais como um clique direto do usuário. Em vez disso, deixamos um
+  // link de verdade (<a href>) que o cliente toca quando quiser — isso
+  // nunca é bloqueado — e a confirmação na tela já garante pro cliente
+  // que o horário foi marcado, mesmo se ele nunca tocar no WhatsApp.
+  function mostrarSucesso(whatsappUrl) {
+    if (whatsappLink) whatsappLink.href = whatsappUrl;
+    var successSummary = document.getElementById('summarySuccessBox');
+    if (successSummary) successSummary.innerHTML = document.getElementById('summaryBox').innerHTML;
+    steps.forEach(function (s) { s.classList.remove('active'); });
+    if (wizardNav) wizardNav.style.display = 'none';
+    if (successEl) successEl.style.display = '';
+    overlay.scrollTop = 0;
+    if (successCloseBtn) successCloseBtn.focus();
+  }
+
   function close() {
     overlay.classList.remove('open');
     overlay.setAttribute('aria-hidden', 'true');
     unlockScroll();
     current = 1;
     choices = {};
+    nextBtn.disabled = false;
+    if (wizardNav) wizardNav.style.display = '';
+    if (successEl) successEl.style.display = 'none';
     overlay.querySelectorAll('.selected').forEach(function (b) {
       b.classList.remove('selected');
     });
     if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
   }
+
+  if (successCloseBtn) successCloseBtn.addEventListener('click', close);
 
   closeBtn.addEventListener('click', close);
   overlay.addEventListener('keydown', function (e) {
@@ -457,8 +485,7 @@
         '• Dia: ' + encodeURIComponent(choices.dia || '') + '%0A' +
         '• Horário: ' + encodeURIComponent(choices.horario || '');
       var url = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + msg;
-      window.open(url, '_blank', 'noopener');
-      close();
+      mostrarSucesso(url);
     });
   });
 

@@ -88,11 +88,12 @@
   // mensalidade de manutenção (R$149, sem desconto), que fica só no
   // painel do operador.
   var MP_TAXA_URL = 'https://fwxwhndjgzwipgpzbnzr.supabase.co/functions/v1/mp-processar-pagamento';
+  var TAXA_CRIACAO_VISIVEL = false; // liga quando for hora de cobrar
   var taxaExpandida = false;
   function renderTaxaBanner() {
     var el = $('#taxaBanner');
     if (!el) return;
-    if (session.role !== 'owner') { el.innerHTML = ''; return; }
+    if (!TAXA_CRIACAO_VISIVEL || session.role !== 'owner') { el.innerHTML = ''; return; }
 
     Store.minhaTaxaCriacao(session.token).then(function (info) {
       if (info.status === 'pago') {

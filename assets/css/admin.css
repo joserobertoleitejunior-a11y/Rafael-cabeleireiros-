@@ -186,15 +186,21 @@
 .adm-field-row{display:flex; gap:0.8rem;}
 .adm-field-row .adm-field{flex:1; min-width:0;}
 
-/* ---------- Escolher foto (substitui o botão cru do navegador) ---------- */
-.adm-photo-picker{
+/* ---------- Escolher foto (substitui o botão cru do navegador) ----------
+   É um <label> dentro de .adm-field, então ".adm-field label" (mais
+   específico — classe + tipo) vencia o display:flex daqui e ainda
+   deixava o texto maiúsculo/pequeno, sem querer. Qualifica com
+   ".adm-field" também pra ganhar a mesma especificidade e não depender
+   de onde a regra aparece no arquivo. */
+.adm-field .adm-photo-picker{
   position:relative; display:flex; align-items:center; gap:0.7rem;
   padding:0.85rem 1rem; background:var(--adm-panel-alt); border:1px dashed var(--adm-gold-soft);
   border-radius:10px; color:var(--adm-text-soft); font-size:0.92rem; cursor:pointer;
+  text-transform:none; letter-spacing:normal; margin-bottom:0;
 }
-.adm-photo-picker svg{width:20px; height:20px; color:var(--adm-gold); flex-shrink:0;}
-.adm-photo-picker:hover{border-color:var(--adm-gold);}
-.adm-photo-picker input[type="file"]{position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;}
+.adm-field .adm-photo-picker svg{width:20px; height:20px; color:var(--adm-gold); flex-shrink:0;}
+.adm-field .adm-photo-picker:hover{border-color:var(--adm-gold);}
+.adm-field .adm-photo-picker input[type="file"]{position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%;}
 @media (max-width:480px){
   .adm-field-row{flex-direction:column; gap:1rem;}
 }
@@ -226,6 +232,15 @@
 .adm-slot-btn.selected{border-color:var(--adm-gold); background:var(--adm-gold-bg); color:var(--adm-gold);}
 .adm-slot-btn.disabled, .adm-slot-btn:disabled{opacity:0.35; cursor:default; text-decoration:line-through;}
 .adm-slot-btn:active:not(:disabled){transform:scale(0.95); transition:transform 0.1s ease;}
+
+/* ---------- Especialidade (toggles em vez de texto livre) ---------- */
+.adm-chip-grid{display:flex; flex-wrap:wrap; gap:0.55rem;}
+.adm-chip{
+  padding:0.55rem 1rem; border-radius:999px; border:1px solid var(--adm-gold-soft);
+  background:var(--adm-panel-alt); color:var(--adm-off-white); font-size:0.86rem; cursor:pointer;
+}
+.adm-chip.selected{border-color:var(--adm-gold); background:var(--adm-gold-bg); color:var(--adm-gold);}
+.adm-chip:active{transform:scale(0.96); transition:transform 0.1s ease;}
 
 /* ---------- PDV: alternância agendar / cortado agora ---------- */
 .adm-toggle-row{display:flex; gap:0.6rem;}

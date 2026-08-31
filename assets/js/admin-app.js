@@ -917,10 +917,10 @@
       '</div>';
 
     container.innerHTML = html;
-    wireServicos(container, team);
+    wireServicos(container, team, services);
   }
 
-  function wireServicos(container, team) {
+  function wireServicos(container, team, services) {
     $all('[data-remove-service]', container).forEach(function (btn) {
       btn.addEventListener('click', function () {
         if (confirm('Remover este serviço?')) {
@@ -966,10 +966,10 @@
     $all('[data-edit-team]', container).forEach(function (btn) {
       btn.addEventListener('click', function () {
         var t = team.filter(function (x) { return x.id === btn.dataset.editTeam; })[0];
-        if (t) openModal(renderTeamEspecialidadeForm(t));
+        if (t) openModal(renderTeamEspecialidadeForm(t, services));
       });
     });
-    $('#addTeamBtn', container).addEventListener('click', function () { openModal(renderTeamForm()); });
+    $('#addTeamBtn', container).addEventListener('click', function () { openModal(renderTeamForm(services)); });
     $all('[data-team-photo]', container).forEach(function (input) {
       input.addEventListener('change', function () {
         var file = input.files[0];
@@ -1047,12 +1047,31 @@
     return wrap;
   }
 
-  function renderTeamForm() {
+  // Especialidade agora é uma escolha entre os serviços já cadastrados
+  // (em vez de texto livre) — a pessoa liga/desliga o que ela faz, e isso
+  // vira o texto exibido ("Corte · Barba"). Reaproveita a lista real de
+  // serviços em vez de inventar uma lista separada pra manter.
+  function especialidadeChipsHtml(services, selecionadas) {
+    return '<div class="adm-chip-grid">' + services.map(function (s) {
+      var ligado = selecionadas.indexOf(s.nome) !== -1;
+      return '<button type="button" class="adm-chip' + (ligado ? ' selected' : '') + '" data-esp-chip="' + esc(s.nome) + '">' + esc(s.nome) + '</button>';
+    }).join('') + '</div>';
+  }
+  function wireEspecialidadeChips(wrap) {
+    $all('[data-esp-chip]', wrap).forEach(function (chip) {
+      chip.addEventListener('click', function () { chip.classList.toggle('selected'); });
+    });
+  }
+  function especialidadeSelecionada(wrap) {
+    return $all('[data-esp-chip].selected', wrap).map(function (c) { return c.dataset.espChip; }).join(' · ');
+  }
+
+  function renderTeamForm(services) {
     var wrap = document.createElement('div');
     wrap.innerHTML =
       '<div class="adm-modal-head"><h3>Novo profissional</h3><button type="button" class="adm-modal-close" id="modalCloseBtn">×</button></div>' +
       '<div class="adm-field"><label>Nome</label><input id="teamNome" type="text"></div>' +
-      '<div class="adm-field"><label>Especialidade</label><input id="teamEsp" type="text" placeholder="Ex: Barbeiro · Colorista"></div>' +
+      '<div class="adm-field"><label>Especialidade</label>' + especialidadeChipsHtml(services, []) + '</div>' +
       '<div class="adm-field"><label>PIN de acesso (mínimo 4 números)</label><input id="teamPin" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Ex: 1234"></div>' +
       '<div class="adm-field"><label>Foto (opcional)</label>' +
       '<label class="adm-photo-picker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>' +
@@ -1060,12 +1079,13 @@
       '<p style="color:var(--adm-text-faint); font-size:0.8rem; margin:-0.4rem 0 1rem;">Esse PIN abre o Caixa PDV, Clientes e Galeria pra essa pessoa — sem acesso ao Dashboard nem a Serviços e Valores.</p>' +
       '<button type="button" class="adm-btn adm-btn-block" id="teamSalvar">Salvar</button>' +
       '<p class="admin-pin-error" id="teamFormError" style="margin-top:0.8rem;"></p>';
+    wireEspecialidadeChips(wrap);
     wrap.querySelector('#teamFoto').addEventListener('change', function (e) {
       wrap.querySelector('#teamFotoNome').textContent = e.target.files[0] ? e.target.files[0].name : 'Escolher foto';
     });
     wrap.querySelector('#teamSalvar').addEventListener('click', function () {
       var nome = wrap.querySelector('#teamNome').value.trim();
-      var esp = wrap.querySelector('#teamEsp').value.trim();
+      var esp = especialidadeSelecionada(wrap);
       var pin = wrap.querySelector('#teamPin').value.trim();
       var errBox = wrap.querySelector('#teamFormError');
       if (!nome || !pin) { errBox.textContent = 'Preencha nome e PIN.'; return; }
@@ -1085,15 +1105,17 @@
 
   // Edição fica só nesse campo mesmo — trocar nome ou PIN exigiria
   // reabrir o painel pra pessoa de novo, então não vale a complexidade.
-  function renderTeamEspecialidadeForm(t) {
+  function renderTeamEspecialidadeForm(t, services) {
+    var atuais = (t.especialidade || '').split('·').map(function (s) { return s.trim(); });
     var wrap = document.createElement('div');
     wrap.innerHTML =
       '<div class="adm-modal-head"><h3>Editar especialidade</h3><button type="button" class="adm-modal-close" id="modalCloseBtn">×</button></div>' +
-      '<div class="adm-field"><label>' + esc(t.nome) + '</label><input id="teamEspEdit" type="text" value="' + esc(t.especialidade || '') + '" placeholder="Ex: Barbeiro · Colorista"></div>' +
+      '<div class="adm-field"><label>' + esc(t.nome) + '</label>' + especialidadeChipsHtml(services, atuais) + '</div>' +
       '<button type="button" class="adm-btn adm-btn-block" id="teamEspSalvar">Salvar</button>' +
       '<p class="admin-pin-error" id="teamEspFormError" style="margin-top:0.8rem;"></p>';
+    wireEspecialidadeChips(wrap);
     wrap.querySelector('#teamEspSalvar').addEventListener('click', function () {
-      var esp = wrap.querySelector('#teamEspEdit').value.trim();
+      var esp = especialidadeSelecionada(wrap);
       var errBox = wrap.querySelector('#teamEspFormError');
       var salvarBtn = wrap.querySelector('#teamEspSalvar');
       salvarBtn.disabled = true;

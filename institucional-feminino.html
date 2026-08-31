@@ -16,7 +16,7 @@
   // e força uma busca garantidamente nova — com um parâmetro que essa
   // versão específica nunca teve antes — ignorando qualquer cache no
   // caminho (celular, GitHub Pages, proxy).
-  var BUILD = '20260830t';
+  var BUILD = '20260830u';
   try {
     if (location.protocol.indexOf('http') !== 0) return;
     if (localStorage.getItem('rafaelBuildSeen') === BUILD) return;
@@ -47,9 +47,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/styles.css?v=20260830t">
-<link rel="stylesheet" href="assets/css/widget.css?v=20260830t">
-<link rel="stylesheet" href="assets/css/feminino.css?v=20260830t">
+<link rel="stylesheet" href="assets/css/styles.css?v=20260830u">
+<link rel="stylesheet" href="assets/css/widget.css?v=20260830u">
+<link rel="stylesheet" href="assets/css/feminino.css?v=20260830u">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="feminino" data-genero="feminino">
@@ -93,18 +93,15 @@
   </div>
 
   <main>
-    <section class="section section-tight">
-      <div class="sobre-split">
-        <div class="section-head" style="margin-bottom:0;">
-          <p class="eyebrow">Sobre a casa</p>
-          <h1 style="font-size:clamp(2.1rem,4.6vw,3.1rem); margin-top:0.6rem;">No Centro de Itapetininga desde 2012</h1>
-          <p>Corte feminino, coloração, mechas e tratamentos capilares num ambiente claro e tranquilo. Sem enrolação — só um atendimento bem feito, na hora marcada.</p>
-          <div style="margin-top:1.6rem;">
-            <button class="btn" type="button" data-open-widget>Agendar horário →</button>
-          </div>
-        </div>
-        <div class="sobre-split-photo">
-          <img src="assets/img/fachada.jpg" alt="Fachada do Rafael Cabeleireiros, no Centro de Itapetininga">
+    <section class="sobre-bg">
+      <div class="sobre-bg-photo" style="background-image:url('assets/img/fachada.jpg');" role="img" aria-label="Fachada do Rafael Cabeleireiros, ao fundo"></div>
+      <div class="sobre-bg-wash"></div>
+      <div class="sobre-bg-copy">
+        <p class="eyebrow">Sobre a casa</p>
+        <h1 style="font-size:clamp(2.1rem,4.6vw,3.1rem); margin-top:0.6rem;">No Centro de Itapetininga desde 2012</h1>
+        <p>Corte feminino, coloração, mechas e tratamentos capilares num ambiente claro e tranquilo. Sem enrolação — só um atendimento bem feito, na hora marcada.</p>
+        <div style="margin-top:1.6rem;">
+          <button class="btn" type="button" data-open-widget>Agendar horário →</button>
         </div>
       </div>
     </section>
@@ -337,11 +334,11 @@
     </div>
   </div>
 
-  <script src="assets/js/menu.js?v=20260830t"></script>
-  <script src="assets/js/supabase-client.js?v=20260830t"></script>
-  <script src="assets/js/team-sync.js?v=20260830t"></script>
-  <script src="assets/js/widget.js?v=20260830t"></script>
-  <script src="assets/js/gallery-public.js?v=20260830t"></script>
-  <script src="assets/js/gender-gate.js?v=20260830t"></script>
+  <script src="assets/js/menu.js?v=20260830u"></script>
+  <script src="assets/js/supabase-client.js?v=20260830u"></script>
+  <script src="assets/js/team-sync.js?v=20260830u"></script>
+  <script src="assets/js/widget.js?v=20260830u"></script>
+  <script src="assets/js/gallery-public.js?v=20260830u"></script>
+  <script src="assets/js/gender-gate.js?v=20260830u"></script>
 </body>
 </html>

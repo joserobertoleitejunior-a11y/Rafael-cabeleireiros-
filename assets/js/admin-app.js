@@ -974,7 +974,7 @@
       input.addEventListener('change', function () {
         var file = input.files[0];
         if (!file) return;
-        Store.uploadPhoto(file, 'equipe', 400, 0.85)
+        Store.uploadPhoto(file, 'equipe', 1000, 0.88)
           .then(function (url) { return Store.updateStaffPhoto(session.token, input.dataset.teamPhoto, url); })
           .then(renderServicos)
           .catch(function (e) { alert('Não deu pra trocar a foto: ' + e.message); });
@@ -1097,7 +1097,7 @@
           .then(function () { closeModal(); renderServicos(); })
           .catch(function (e) { errBox.textContent = e.message; salvarBtn.disabled = false; });
       }
-      if (file) Store.uploadPhoto(file, 'equipe', 400, 0.85).then(salvar).catch(function (e) { errBox.textContent = e.message; salvarBtn.disabled = false; });
+      if (file) Store.uploadPhoto(file, 'equipe', 1000, 0.88).then(salvar).catch(function (e) { errBox.textContent = e.message; salvarBtn.disabled = false; });
       else salvar(null);
     });
     return wrap;

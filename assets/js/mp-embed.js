@@ -67,13 +67,13 @@
       return mp.bricks().create('payment', opts.containerId, {
         initialization: { amount: opts.amount },
         customization: {
-          // "debitCard" não aceita o valor "excluded" nesse Brick (o
-          // Mercado Pago recusa a configuração inteira se ele estiver
-          // aqui) — por isso fica de fora; débito ainda pode aparecer
-          // como opção, mas os outros métodos continuam restritos.
+          // "debitCard" e "ticket" (boleto) não aceitam o valor "excluded"
+          // nesse Brick (o Mercado Pago recusa a configuração inteira se
+          // qualquer um dos dois estiver aqui) — por isso ficam de fora;
+          // podem aparecer como opção, mas cartão/Pix seguem restritos.
           paymentMethods: opts.forma === 'pix'
-            ? { bankTransfer: 'all', creditCard: 'excluded', ticket: 'excluded' }
-            : { creditCard: 'all', bankTransfer: 'excluded', ticket: 'excluded' }
+            ? { bankTransfer: 'all', creditCard: 'excluded' }
+            : { creditCard: 'all', bankTransfer: 'excluded' }
         },
         callbacks: {
           onSubmit: function (formData) {
@@ -117,7 +117,7 @@
       return mp.bricks().create('payment', opts.containerId, {
         initialization: { amount: opts.valor, payer: { email: opts.email || undefined } },
         customization: {
-          paymentMethods: { creditCard: 'all', bankTransfer: 'excluded', ticket: 'excluded', maxInstallments: 1 }
+          paymentMethods: { creditCard: 'all', bankTransfer: 'excluded', maxInstallments: 1 }
         },
         callbacks: {
           onSubmit: function (formData) {

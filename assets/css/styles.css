@@ -586,6 +586,12 @@ footer.site-footer .foot-col{display:flex; flex-direction:column; gap:0.4rem; mi
 .gender-gate-option span{font-size:1.6rem;}
 .gender-gate-option:hover, .gender-gate-option:focus-visible{border-color:#C9A227; background:var(--linen-deep);}
 .gender-gate-option:active{transform:scale(0.98); transition:transform 0.1s ease;}
+.gender-gate-option-padrao{border-color:#C9A227; background:var(--linen-deep); position:relative;}
+.gender-gate-option-padrao::after{
+  content:'última escolha'; position:absolute; top:-0.6rem; left:50%; transform:translateX(-50%);
+  background:#C9A227; color:var(--white); font-size:0.62rem; letter-spacing:0.04em; text-transform:uppercase;
+  padding:0.15rem 0.55rem; border-radius:999px; white-space:nowrap;
+}
 @media (max-width:480px){
   .gender-switch span.gender-switch-label{display:none;}
 }

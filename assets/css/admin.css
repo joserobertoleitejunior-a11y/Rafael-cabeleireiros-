@@ -176,8 +176,18 @@
   border:1px solid var(--adm-gold-soft); border-radius:10px; color:var(--adm-off-white); font-size:1rem;
 }
 .adm-field input:focus, .adm-field select:focus{outline:none; border-color:var(--adm-gold);}
+.adm-field select{
+  -webkit-appearance:none; -moz-appearance:none; appearance:none;
+  padding-right:2.6rem; cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23C9A227' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 1rem center; background-size:16px;
+}
+.adm-field select::-ms-expand{display:none;}
 .adm-field-row{display:flex; gap:0.8rem;}
-.adm-field-row .adm-field{flex:1;}
+.adm-field-row .adm-field{flex:1; min-width:0;}
+@media (max-width:480px){
+  .adm-field-row{flex-direction:column; gap:1rem;}
+}
 
 /* ---------- Grade de escolha (barbeiro/serviço no PDV) ---------- */
 .adm-pick-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:0.8rem;}

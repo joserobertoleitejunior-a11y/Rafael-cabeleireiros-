@@ -290,39 +290,37 @@ body.scroll-locked{position:fixed; left:0; right:0; overflow:hidden;}
 .service-badge strong{font-size:0.78rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink);}
 .service-badge span{display:block; font-size:0.7rem; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-soft); margin-top:0.15rem;}
 
-/* ---------- Sobre a casa (foto real da fachada: nítida no topo, some aos
-   poucos borrando e se mesclando na cor de fundo mais embaixo) ----------
-   Duas camadas da mesma foto empilhadas: a de cima é nítida mas com uma
-   máscara que a apaga gradualmente de cima pra baixo, revelando a de
-   baixo (já borrada) onde ela desaparece. Um gradiente por cima cuida da
-   mescla final com a cor real do fundo do site. */
-.sobre-bg{
+/* ---------- Sobre a casa (a foto real da fachada aparece quase inteira,
+   sem cortar, e vai sumindo — borrando e se mesclando na cor do site —
+   antes do texto começar) ----------
+   O contêiner da foto usa a proporção real da imagem (aspect-ratio), não
+   a largura da seção, então "cover" não precisa cortar quase nada: a foto
+   inteira cabe. Duas camadas da mesma foto empilhadas: a de cima é nítida
+   mas com uma máscara que a apaga gradualmente de cima pra baixo,
+   revelando a de baixo (já borrada) onde ela desaparece — e um gradiente
+   por cima termina a mescla com a cor real do fundo do site. */
+.sobre-bg{padding:3.6rem 6vw 4.2rem; text-align:center;}
+.sobre-bg-photo-wrap{
   position:relative; overflow:hidden; isolation:isolate;
-  display:flex; align-items:flex-end; min-height:82vh;
+  width:100%; max-width:460px; aspect-ratio:900/1353;
+  margin:0 auto 2.2rem;
 }
 .sobre-bg-photo-sharp, .sobre-bg-photo-blur{
-  position:absolute; inset:0; background-size:cover; background-position:center 28%; z-index:0;
+  position:absolute; inset:0; background-size:cover; background-position:center top; z-index:0;
 }
-.sobre-bg-photo-blur{filter:blur(16px) saturate(0.92); transform:scale(1.1);}
+.sobre-bg-photo-blur{filter:blur(14px) saturate(0.92); transform:scale(1.06);}
 .sobre-bg-photo-sharp{
-  -webkit-mask-image:linear-gradient(180deg, #000 0%, #000 30%, transparent 62%);
-  mask-image:linear-gradient(180deg, #000 0%, #000 30%, transparent 62%);
+  -webkit-mask-image:linear-gradient(180deg, #000 0%, #000 60%, transparent 94%);
+  mask-image:linear-gradient(180deg, #000 0%, #000 60%, transparent 94%);
 }
 .sobre-bg-wash{
   position:absolute; inset:0; z-index:0;
-  background:linear-gradient(180deg, transparent 0%, transparent 20%, var(--linen) 78%);
+  background:linear-gradient(180deg, transparent 0%, transparent 52%, var(--linen) 97%);
 }
-.sobre-bg-copy{position:relative; z-index:1; max-width:58ch; padding:0 6vw 3.4rem;}
+.sobre-bg-copy{max-width:58ch; margin:0 auto;}
 @media (max-width:700px){
-  .sobre-bg{min-height:72vh;}
-  .sobre-bg-photo-sharp, .sobre-bg-photo-blur{background-position:center 22%;}
-  .sobre-bg-photo-blur{filter:blur(12px) saturate(0.94);}
-  .sobre-bg-photo-sharp{
-    -webkit-mask-image:linear-gradient(180deg, #000 0%, #000 24%, transparent 52%);
-    mask-image:linear-gradient(180deg, #000 0%, #000 24%, transparent 52%);
-  }
-  .sobre-bg-wash{background:linear-gradient(180deg, transparent 0%, transparent 16%, var(--linen) 68%);}
-  .sobre-bg-copy{padding:0 6vw 2.6rem;}
+  .sobre-bg{padding:2.8rem 6vw 3.2rem;}
+  .sobre-bg-photo-wrap{max-width:340px; margin-bottom:1.8rem;}
 }
 
 /* ---------- Prévia da equipe (página institucional) ---------- */

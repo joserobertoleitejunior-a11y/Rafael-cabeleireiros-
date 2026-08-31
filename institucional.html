@@ -16,7 +16,7 @@
   // e força uma busca garantidamente nova — com um parâmetro que essa
   // versão específica nunca teve antes — ignorando qualquer cache no
   // caminho (celular, GitHub Pages, proxy).
-  var BUILD = '20260830z';
+  var BUILD = '202608a0';
   try {
     if (location.protocol.indexOf('http') !== 0) return;
     if (localStorage.getItem('rafaelBuildSeen') === BUILD) return;
@@ -47,8 +47,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/styles.css?v=20260830z">
-<link rel="stylesheet" href="assets/css/widget.css?v=20260830z">
+<link rel="stylesheet" href="assets/css/styles.css?v=202608a0">
+<link rel="stylesheet" href="assets/css/widget.css?v=202608a0">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body data-genero="masculino">
@@ -93,9 +93,11 @@
 
   <main>
     <section class="sobre-bg">
-      <div class="sobre-bg-photo-blur" style="background-image:url('assets/img/fachada.jpg');"></div>
-      <div class="sobre-bg-photo-sharp" style="background-image:url('assets/img/fachada.jpg');" role="img" aria-label="Fachada do Rafael Cabeleireiros, ao fundo"></div>
-      <div class="sobre-bg-wash"></div>
+      <div class="sobre-bg-photo-wrap">
+        <div class="sobre-bg-photo-blur" style="background-image:url('assets/img/fachada.jpg');"></div>
+        <div class="sobre-bg-photo-sharp" style="background-image:url('assets/img/fachada.jpg');" role="img" aria-label="Fachada do Rafael Cabeleireiros"></div>
+        <div class="sobre-bg-wash"></div>
+      </div>
       <div class="sobre-bg-copy">
         <p class="eyebrow">Sobre a casa</p>
         <h1 style="font-size:clamp(2.1rem,4.6vw,3.1rem); margin-top:0.6rem;">No Centro de Itapetininga desde 2012</h1>
@@ -323,11 +325,11 @@
     </div>
   </div>
 
-  <script src="assets/js/menu.js?v=20260830z"></script>
-  <script src="assets/js/supabase-client.js?v=20260830z"></script>
-  <script src="assets/js/team-sync.js?v=20260830z"></script>
-  <script src="assets/js/widget.js?v=20260830z"></script>
-  <script src="assets/js/gallery-public.js?v=20260830z"></script>
-  <script src="assets/js/gender-gate.js?v=20260830z"></script>
+  <script src="assets/js/menu.js?v=202608a0"></script>
+  <script src="assets/js/supabase-client.js?v=202608a0"></script>
+  <script src="assets/js/team-sync.js?v=202608a0"></script>
+  <script src="assets/js/widget.js?v=202608a0"></script>
+  <script src="assets/js/gallery-public.js?v=202608a0"></script>
+  <script src="assets/js/gender-gate.js?v=202608a0"></script>
 </body>
 </html>

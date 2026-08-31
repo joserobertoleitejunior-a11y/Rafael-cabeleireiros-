@@ -60,12 +60,15 @@
 
   // Monta um Payment Brick pra cobrar um valor único agora (taxa de
   // criação, ou Pix avulso da mensalidade). opts: {publicKey, amount,
-  // telefone, tipo, forma, edgeUrl, containerId, onResult}
+  // telefone, email, tipo, forma, edgeUrl, containerId, onResult}
   function montarPagamento(opts) {
     return carregarSDK().then(function () { return desmontar(opts.containerId); }).then(function () {
       var mp = new global.MercadoPago(opts.publicKey, { locale: 'pt-BR' });
       return mp.bricks().create('payment', opts.containerId, {
-        initialization: { amount: opts.amount },
+        // Manda o e-mail já preenchido — sem isso, o Pix (bank_transfer)
+        // sempre pede pro cliente digitar o e-mail dentro do próprio
+        // formulário do Brick antes de gerar o código.
+        initialization: { amount: opts.amount, payer: { email: opts.email || undefined } },
         // Esse Brick não aceita "excluded" em NENHUM método (testado com
         // debitCard, ticket, bankTransfer e creditCard — todos recusam,
         // só "all" é aceito). Então só informamos a opção que queremos
@@ -73,14 +76,14 @@
         customization: {
           paymentMethods: opts.forma === 'pix'
             ? { bankTransfer: 'all' }
-            : { creditCard: 'all' }
+            : { creditCard: 'all', debitCard: 'all' }
         },
         callbacks: {
           onSubmit: function (formData) {
             return fetch(opts.edgeUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ telefone: opts.telefone, tipo: opts.tipo, forma: opts.forma, mpFormData: formData })
+              body: JSON.stringify({ telefone: opts.telefone, email: opts.email || '', tipo: opts.tipo, forma: opts.forma, mpFormData: formData })
             }).then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
               .then(function (result) {
                 if (!result.ok) throw new Error((result.data && result.data.error) || 'Pagamento recusado.');
@@ -117,7 +120,7 @@
       return mp.bricks().create('payment', opts.containerId, {
         initialization: { amount: opts.valor, payer: { email: opts.email || undefined } },
         customization: {
-          paymentMethods: { creditCard: 'all', maxInstallments: 1 }
+          paymentMethods: { creditCard: 'all', debitCard: 'all', maxInstallments: 1 }
         },
         callbacks: {
           onSubmit: function (formData) {

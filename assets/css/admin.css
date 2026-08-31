@@ -45,6 +45,15 @@
 .taxa-banner .taxa-msg{font-size:0.85rem; margin-top:0.6rem;}
 .taxa-banner .taxa-msg.erro{color:var(--adm-danger);}
 
+/* O formulário do Mercado Pago (Payment Brick) não herda nosso CSS —
+   vem com o tamanho responsivo dele, que fica grande demais dentro de
+   um painel já compacto. Limita a largura pra ficar proporcional ao
+   resto da tela, em vez de ocupar tudo. */
+#contratoCartaoBrick, #contratoPixBrick, #taxaBrickContainer{
+  max-width:340px; margin-left:auto; margin-right:auto;
+}
+#contratoCartaoBrick:empty, #contratoPixBrick:empty, #taxaBrickContainer:empty{margin:0;}
+
 /* Tira colapsada — só uma linha fina e clicável; o aviso completo (com
    os botões de pagamento) só aparece quando o dono toca nela. */
 .taxa-strip{

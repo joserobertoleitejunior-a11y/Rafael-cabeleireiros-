@@ -126,6 +126,8 @@
         (info.dentro_do_prazo ? '<span class="taxa-de">' + fmtBRL(info.valor_pix) + '</span> ' + fmtBRL(info.valor_pix_desconto) : fmtBRL(info.valor_pix)) +
         '</strong></div>' +
         '</div>' +
+        '<div class="adm-field"><label>E-mail pra receber o comprovante</label>' +
+        '<input class="field-input" type="email" id="taxaEmail" placeholder="seuemail@exemplo.com" value="' + esc(info.email || '') + '"></div>' +
         '<div class="taxa-acoes">' +
         '<button type="button" class="adm-btn adm-btn-sm" id="taxaPagarPix">Pagar no Pix</button>' +
         '<button type="button" class="adm-btn adm-btn-sm adm-btn-ghost" id="taxaPagarCredito">Pagar no cartão 5x</button>' +
@@ -136,17 +138,28 @@
       el.innerHTML = html;
       $('#taxaToggle').addEventListener('click', function () { taxaExpandida = false; renderTaxaBanner(); });
 
+      var botoesForma = [$('#taxaPagarPix'), $('#taxaPagarCredito')];
+
       function abrirBrick(forma) {
         var msgEl = $('#taxaMsg');
         var brickEl = $('#taxaBrickContainer');
+        var email = ($('#taxaEmail').value || '').trim();
+        if (!email || email.indexOf('@') === -1) {
+          msgEl.textContent = 'Digite um e-mail válido antes de continuar.';
+          msgEl.className = 'taxa-msg erro';
+          $('#taxaEmail').focus();
+          return;
+        }
         msgEl.textContent = 'Carregando o pagamento…';
         msgEl.className = 'taxa-msg';
+        botoesForma.forEach(function (b) { b.disabled = true; });
         Store.mpPublicKey().then(function (publicKey) {
           return RafaelMP.montarPagamento({
             publicKey: publicKey,
             containerId: 'taxaBrickContainer',
             amount: forma === 'pix' ? valorPix : valorCredito,
             telefone: info.telefone,
+            email: email,
             tipo: 'taxa',
             forma: forma,
             edgeUrl: MP_TAXA_URL,
@@ -172,9 +185,12 @@
               }
             }
           });
+        }).then(function () {
+          botoesForma.forEach(function (b) { b.disabled = false; });
         }).catch(function (e) {
           msgEl.textContent = e.message || 'Erro ao carregar o pagamento.';
           msgEl.className = 'taxa-msg erro';
+          botoesForma.forEach(function (b) { b.disabled = false; });
         });
       }
 
@@ -1200,6 +1216,8 @@
       '<p style="color:var(--adm-text-soft); margin-top:0.4rem;">Plano ' + esc(info.plano) + ' · ' + fmtBRL(info.valor) + ' · vencimento ' + fmtDayBR(info.vencimento) + '</p>' +
       '<p style="margin-top:0.3rem; color:' + corStatus + ';">● ' + esc(info.status).toUpperCase() + '</p>' +
       (info.mp_last_status ? '<p style="font-size:0.82rem; margin-top:0.3rem; color:var(--adm-text-faint);">Mercado Pago: ' + esc(info.mp_last_status) + '</p>' : '') +
+      '<div class="adm-field" style="margin-top:0.8rem;"><label>E-mail pra receber o comprovante</label>' +
+      '<input class="field-input" type="email" id="contratoEmail" placeholder="seuemail@exemplo.com" value="' + esc(info.email || '') + '"></div>' +
       '</div>' +
       '<div class="adm-panel">' +
       '<h3 style="font-size:1.2rem;">Cadastrar cartão (cobrança automática)</h3>' +
@@ -1227,6 +1245,19 @@
 
     var planoEscolhido = null;
     var botoesPlano = container.querySelectorAll('[data-contrato-plano]');
+    var pixBtn = $('#contratoGerarPix', container);
+
+    function emailPreenchido(msgEl) {
+      var email = ($('#contratoEmail', container).value || '').trim();
+      if (!email || email.indexOf('@') === -1) {
+        msgEl.textContent = 'Digite um e-mail válido antes de continuar.';
+        msgEl.className = 'taxa-msg erro';
+        $('#contratoEmail', container).focus();
+        return null;
+      }
+      return email;
+    }
+
     botoesPlano.forEach(function (btn) {
       btn.addEventListener('click', function () {
         botoesPlano.forEach(function (b) { b.classList.add('adm-btn-ghost'); });
@@ -1238,14 +1269,20 @@
 
     function abrirCartaoBrick(plano) {
       var msgEl = $('#contratoMsg', container);
-      var brickEl = $('#contratoCartaoBrick', container);
+      var email = emailPreenchido(msgEl);
+      if (!email) return;
       msgEl.textContent = 'Carregando o formulário do cartão…';
       msgEl.className = 'taxa-msg';
+      // Trava os botões de plano enquanto o Brick está montando — clicar
+      // duas vezes rápido (ou trocar de plano no meio do caminho) fazia
+      // dois formulários nascerem ao mesmo tempo dentro do mesmo espaço.
+      botoesPlano.forEach(function (b) { b.disabled = true; });
       Store.mpPublicKey().then(function (publicKey) {
         return RafaelMP.montarCartaoAssinatura({
           publicKey: publicKey,
           containerId: 'contratoCartaoBrick',
           telefone: info.telefone,
+          email: email,
           plano: plano,
           valor: plano === 'anual' ? 1390 : 149,
           edgeUrl: MP_ASSINATURA_URL,
@@ -1260,23 +1297,30 @@
             setTimeout(renderContrato, 1200);
           }
         });
+      }).then(function () {
+        botoesPlano.forEach(function (b) { b.disabled = false; });
       }).catch(function (e) {
         msgEl.textContent = e.message || 'Erro ao carregar o formulário.';
         msgEl.className = 'taxa-msg erro';
+        botoesPlano.forEach(function (b) { b.disabled = false; });
       });
     }
 
-    $('#contratoGerarPix', container).addEventListener('click', function () {
+    pixBtn.addEventListener('click', function () {
       var msgEl = $('#contratoPixMsg', container);
       var brickEl = $('#contratoPixBrick', container);
+      var email = emailPreenchido(msgEl);
+      if (!email) return;
       msgEl.textContent = 'Carregando o Pix…';
       msgEl.className = 'taxa-msg';
+      pixBtn.disabled = true;
       Store.mpPublicKey().then(function (publicKey) {
         return RafaelMP.montarPagamento({
           publicKey: publicKey,
           containerId: 'contratoPixBrick',
           amount: info.valor,
           telefone: info.telefone,
+          email: email,
           tipo: 'cobranca',
           forma: 'pix',
           edgeUrl: MP_PAGAMENTO_URL,
@@ -1299,9 +1343,12 @@
             }
           }
         });
+      }).then(function () {
+        pixBtn.disabled = false;
       }).catch(function (e) {
         msgEl.textContent = e.message || 'Erro ao gerar o Pix.';
         msgEl.className = 'taxa-msg erro';
+        pixBtn.disabled = false;
       });
     });
   }

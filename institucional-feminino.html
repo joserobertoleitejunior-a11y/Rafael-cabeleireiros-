@@ -16,7 +16,7 @@
   // e força uma busca garantidamente nova — com um parâmetro que essa
   // versão específica nunca teve antes — ignorando qualquer cache no
   // caminho (celular, GitHub Pages, proxy).
-  var BUILD = '20260830u';
+  var BUILD = '20260830w';
   try {
     if (location.protocol.indexOf('http') !== 0) return;
     if (localStorage.getItem('rafaelBuildSeen') === BUILD) return;
@@ -47,9 +47,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/styles.css?v=20260830u">
-<link rel="stylesheet" href="assets/css/widget.css?v=20260830u">
-<link rel="stylesheet" href="assets/css/feminino.css?v=20260830u">
+<link rel="stylesheet" href="assets/css/styles.css?v=20260830w">
+<link rel="stylesheet" href="assets/css/widget.css?v=20260830w">
+<link rel="stylesheet" href="assets/css/feminino.css?v=20260830w">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="feminino" data-genero="feminino">
@@ -112,19 +112,8 @@
         <h2>Nossas profissionais</h2>
         <p>Toque em "Agendar" pra já abrir a agenda com quem você preferir.</p>
       </div>
-      <div class="team-preview-grid">
-        <div class="team-preview-card boiserie" data-staff="Carla Menezes">
-          <img src="assets/img/placeholder-portrait.svg" class="tone-bw" alt="Carla Menezes">
-          <h3>Carla Menezes</h3>
-          <p class="eyebrow">Colorista &amp; Tratamentos</p>
-          <button class="btn btn-sm" type="button" data-open-widget data-preselect-prof="Carla Menezes">Agendar com Carla →</button>
-        </div>
-        <div class="team-preview-card boiserie" data-staff="Rafael Souza">
-          <img src="assets/img/placeholder-portrait.svg" class="tone-bw" alt="Rafael Souza">
-          <h3>Rafael Souza</h3>
-          <p class="eyebrow">Fundador · Master Barber</p>
-          <button class="btn btn-sm" type="button" data-open-widget data-preselect-prof="Rafael Souza">Agendar com Rafael →</button>
-        </div>
+      <div class="team-preview-grid" id="teamGrid" data-team-variant="preview">
+        <p class="team-empty">Carregando a equipe…</p>
       </div>
       <div style="text-align:center; margin-top:1.8rem;">
         <a class="btn btn-ghost" href="profissionais-feminino.html">Ver todas as profissionais →</a>
@@ -334,11 +323,11 @@
     </div>
   </div>
 
-  <script src="assets/js/menu.js?v=20260830u"></script>
-  <script src="assets/js/supabase-client.js?v=20260830u"></script>
-  <script src="assets/js/team-sync.js?v=20260830u"></script>
-  <script src="assets/js/widget.js?v=20260830u"></script>
-  <script src="assets/js/gallery-public.js?v=20260830u"></script>
-  <script src="assets/js/gender-gate.js?v=20260830u"></script>
+  <script src="assets/js/menu.js?v=20260830w"></script>
+  <script src="assets/js/supabase-client.js?v=20260830w"></script>
+  <script src="assets/js/team-sync.js?v=20260830w"></script>
+  <script src="assets/js/widget.js?v=20260830w"></script>
+  <script src="assets/js/gallery-public.js?v=20260830w"></script>
+  <script src="assets/js/gender-gate.js?v=20260830w"></script>
 </body>
 </html>

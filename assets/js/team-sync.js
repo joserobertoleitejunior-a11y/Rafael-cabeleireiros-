@@ -1,16 +1,38 @@
-/* Sincroniza os cartões de profissional das páginas institucionais
-   (profissionais.html, institucional.html e as versões femininas) com
-   o banco de verdade — sem isso, foto trocada ou funcionário removido
-   no admin nunca aparecia fora do próprio admin, porque esses cartões
-   eram HTML fixo com bio/estatísticas escritas à mão.
-   Cada cartão marcado com data-staff="Nome Exato" recebe a foto
-   atualizada do banco; se o profissional foi removido (ou nunca
-   existiu ativo), o cartão inteiro some da página. Além disso, clicar
-   na foto abre um mural só com as fotos da galeria marcadas pra essa
-   pessoa (reaproveita o staff_id que o admin já usa pra marcar fotos). */
-(function () {
-  if (!window.db) return;
+/* Gera os cartões de profissional das páginas institucionais direto do
+   banco de verdade — nome, foto e especialidade só existem aqui, nunca
+   escritos à mão no HTML. Antes, cada página tinha um card fixo por
+   profissional (bio, "X anos de casa", estatísticas inventadas, tags) e um
+   script separado só corrigia foto/remoção depois — daí vinham as telas
+   dessincronizadas: trocar ou remover alguém no admin não alcançava esses
+   cards escritos à mão, e cada correção só resolvia um sintoma de cada vez.
+   Agora não existe mais conteúdo fixo pra ficar desatualizado: a página só
+   tem um contêiner vazio (#teamGrid) e este script constrói tudo a partir
+   de staff_public sempre que a página carrega.
 
+   Além disso, clicar na foto de um profissional abre um mural só com as
+   fotos da galeria marcadas pra essa pessoa (reaproveita o staff_id que o
+   admin já usa pra marcar fotos). */
+(function () {
+  var container = document.getElementById('teamGrid');
+  if (!container) return;
+  var variant = container.getAttribute('data-team-variant'); // 'full' (profissionais.html) | 'preview' (institucional.html)
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function renderVazio(msg) {
+    container.innerHTML = '<p class="team-empty">' + msg + '</p>';
+  }
+
+  if (!window.db) {
+    renderVazio('Não conseguimos carregar a equipe agora. Recarregue a página em instantes ou ligue pra gente: <a href="tel:+5515996507174">(15) 99650-7174</a>.');
+    return;
+  }
+
+  // -------- mural de fotos por profissional (clique na foto) --------
   var overlay = document.createElement('div');
   overlay.className = 'staff-gallery-overlay';
   overlay.innerHTML =
@@ -19,13 +41,13 @@
     '<div class="staff-gallery-grid" id="staffGalleryGrid"></div>' +
     '</div>';
 
-  var closeBtn, fechar;
+  var overlayPronto = false;
   function garantirOverlay() {
-    if (overlay.parentNode) return;
+    if (overlayPronto) return;
+    overlayPronto = true;
     document.body.appendChild(overlay);
-    closeBtn = overlay.querySelector('.staff-gallery-close');
-    fechar = function () { overlay.classList.remove('open'); };
-    closeBtn.addEventListener('click', fechar);
+    var fechar = function () { overlay.classList.remove('open'); };
+    overlay.querySelector('.staff-gallery-close').addEventListener('click', fechar);
     overlay.addEventListener('click', function (e) { if (e.target === overlay) fechar(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fechar(); });
   }
@@ -49,29 +71,48 @@
     });
   }
 
+  // -------- cartões --------
+  function foto(p) {
+    return p.foto_url ? esc(p.foto_url) : 'assets/img/placeholder-portrait.svg';
+  }
+
+  function cardFull(p, i) {
+    var reverse = i % 2 === 1 ? ' reverse' : '';
+    return '<article class="pro-card' + reverse + ' boiserie" data-staff-id="' + p.id + '">' +
+      '<div class="pro-photo"><img src="' + foto(p) + '" class="tone-bw staff-photo-clicavel" alt="' + esc(p.nome) + '"></div>' +
+      '<div class="pro-body">' +
+      (p.especialidade ? '<p class="eyebrow">' + esc(p.especialidade) + '</p>' : '') +
+      '<h3>' + esc(p.nome) + '</h3>' +
+      '<button class="btn btn-sm" type="button" data-open-widget data-preselect-prof="' + esc(p.nome) + '">Agendar com ' + esc(p.nome.split(' ')[0]) + ' →</button>' +
+      '</div></article>';
+  }
+
+  function cardPreview(p) {
+    return '<div class="team-preview-card boiserie" data-staff-id="' + p.id + '">' +
+      '<img src="' + foto(p) + '" class="tone-bw staff-photo-clicavel" alt="' + esc(p.nome) + '">' +
+      '<h3>' + esc(p.nome) + '</h3>' +
+      (p.especialidade ? '<p class="eyebrow">' + esc(p.especialidade) + '</p>' : '') +
+      '<button class="btn btn-sm" type="button" data-open-widget data-preselect-prof="' + esc(p.nome) + '">Agendar com ' + esc(p.nome.split(' ')[0]) + ' →</button>' +
+      '</div>';
+  }
+
   window.db.from('staff_public').select('id,nome,especialidade,foto_url').then(function (res) {
-    // Lista vazia quase sempre é falha de rede/conexão a meio caminho, não
-    // "todo mundo foi removido" (o dono nunca fica inativo) — nesse caso
-    // é mais seguro manter o HTML fixo do que apagar a equipe inteira da
-    // tela.
-    if (res.error || !res.data || !res.data.length) return;
+    if (res.error) { renderVazio('Não conseguimos carregar a equipe agora. Tenta de novo em instantes.'); return; }
+    var lista = res.data || [];
+    if (!lista.length) { renderVazio('Nenhum profissional cadastrado no momento.'); return; }
 
-    var porNome = {};
-    res.data.forEach(function (s) { porNome[s.nome] = s; });
+    container.innerHTML = lista.map(function (p, i) {
+      return variant === 'full' ? cardFull(p, i) : cardPreview(p);
+    }).join('');
 
-    document.querySelectorAll('[data-staff]').forEach(function (card) {
-      var nome = card.getAttribute('data-staff');
-      var staff = porNome[nome];
-      if (!staff) { card.remove(); return; }
-
-      card.setAttribute('data-staff-id', staff.id);
-      var img = card.querySelector('img');
-      if (staff.foto_url && img) img.src = staff.foto_url;
-      if (img) {
-        img.classList.add('staff-photo-clicavel');
-        img.title = 'Ver fotos de trabalhos de ' + nome;
-        img.addEventListener('click', function () { abrirGaleriaDoProfissional(staff.id, nome); });
-      }
+    container.querySelectorAll('.staff-photo-clicavel').forEach(function (img) {
+      var card = img.closest('[data-staff-id]');
+      var staffId = card.getAttribute('data-staff-id');
+      var nome = card.querySelector('h3').textContent;
+      img.title = 'Ver fotos de trabalhos de ' + nome;
+      img.addEventListener('click', function () { abrirGaleriaDoProfissional(staffId, nome); });
     });
-  }).catch(function () { /* offline: mantém o que já está fixo no HTML */ });
+  }).catch(function () {
+    renderVazio('Não conseguimos carregar a equipe agora. Tenta de novo em instantes.');
+  });
 })();

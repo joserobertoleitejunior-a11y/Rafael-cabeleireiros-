@@ -97,13 +97,16 @@
             esc(p.nome) + (p.especialidade ? ' — ' + esc(p.especialidade) : '') +
             '</button>';
         }).join('');
-        // O botão "Agendar com Fulano" (dado fixo no HTML) pré-seleciona o
-        // profissional antes mesmo dessa busca terminar — se essa pessoa já
-        // não estiver mais na lista de verdade (foi removida), a escolha
-        // preenchida na tela é inválida. Sem isso, dava pra "agendar" com
-        // alguém que já não trabalha mais lá, mesmo com a lista certa aqui.
-        if (choices.profissional && !res.data.some(function (p) { return p.nome === choices.profissional; })) {
-          selectChoice('profissional', '');
+        // O botão "Agendar com Fulano" pré-seleciona o profissional antes
+        // mesmo dessa busca terminar — se essa pessoa já não estiver mais na
+        // lista de verdade (foi removida), a escolha preenchida na tela é
+        // inválida. Sem isso, dava pra "agendar" com alguém que já não
+        // trabalha mais lá. Revalida sempre (mesmo quando continua válida),
+        // porque o innerHTML acima de recriar os cartões apaga o destaque
+        // ".selected" de quem já tinha sido escolhido.
+        if (choices.profissional) {
+          var aindaValido = res.data.some(function (p) { return p.nome === choices.profissional; });
+          selectChoice('profissional', aindaValido ? choices.profissional : '');
         }
       }).catch(function () { /* offline: mantém o HTML fixo */ });
     });

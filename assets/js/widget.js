@@ -97,6 +97,14 @@
             esc(p.nome) + (p.especialidade ? ' — ' + esc(p.especialidade) : '') +
             '</button>';
         }).join('');
+        // O botão "Agendar com Fulano" (dado fixo no HTML) pré-seleciona o
+        // profissional antes mesmo dessa busca terminar — se essa pessoa já
+        // não estiver mais na lista de verdade (foi removida), a escolha
+        // preenchida na tela é inválida. Sem isso, dava pra "agendar" com
+        // alguém que já não trabalha mais lá, mesmo com a lista certa aqui.
+        if (choices.profissional && !res.data.some(function (p) { return p.nome === choices.profissional; })) {
+          selectChoice('profissional', '');
+        }
       }).catch(function () { /* offline: mantém o HTML fixo */ });
     });
 

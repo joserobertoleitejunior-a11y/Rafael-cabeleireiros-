@@ -168,6 +168,9 @@
     dashboardStats: function (token) {
       return unwrap(db().rpc('admin_dashboard_stats', { p_token: token }));
     },
+    statsVisitas: function (token) {
+      return unwrap(db().rpc('admin_stats_visitas', { p_token: token }));
+    },
 
     // ---- taxa de criação do site (pagamento único, separado da mensalidade) ----
     minhaTaxaCriacao: function (token) {

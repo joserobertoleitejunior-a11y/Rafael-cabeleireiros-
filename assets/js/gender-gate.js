@@ -5,19 +5,13 @@
    navega livre pelo site inteiro sem ser interrompida de novo; a
    pergunta só volta a aparecer quando ela sai do site (fecha a aba/
    navegador) e entra de novo depois. Guardamos isso em sessionStorage
-   (baixo consumo, some sozinho ao sair) e mantemos a última escolha em
-   localStorage só como sugestão pré-marcada na próxima sessão. */
+   (baixo consumo, some sozinho ao sair). */
 (function () {
-  var KEY = 'rafaelGenero';
   var SESSION_KEY = 'rafaelGeneroSessao';
   var thisPage = document.body.getAttribute('data-genero'); // 'masculino' | 'feminino'
 
   function salvar(escolha) {
-    try { localStorage.setItem(KEY, escolha); } catch (e) { /* modo privado — segue sem lembrar */ }
     try { sessionStorage.setItem(SESSION_KEY, escolha); } catch (e) { /* segue sem marcar a sessão */ }
-  }
-  function salvo() {
-    try { return localStorage.getItem(KEY); } catch (e) { return null; }
   }
   function escolhidoNestaSessao() {
     try { return sessionStorage.getItem(SESSION_KEY); } catch (e) { return null; }
@@ -37,12 +31,6 @@
 
   // já respondeu (ou navegou pelo pill) nesta sessão — não pergunta de novo.
   if (escolhidoNestaSessao()) { gate.remove(); return; }
-
-  var escolhaAnterior = salvo();
-  if (escolhaAnterior) {
-    var btnAnterior = gate.querySelector('[data-gender-escolha="' + escolhaAnterior + '"]');
-    if (btnAnterior) btnAnterior.classList.add('gender-gate-option-padrao');
-  }
 
   gate.classList.add('open');
   document.body.classList.add('scroll-locked');

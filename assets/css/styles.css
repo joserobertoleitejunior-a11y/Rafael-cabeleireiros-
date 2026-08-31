@@ -298,31 +298,31 @@ body.scroll-locked{position:fixed; left:0; right:0; overflow:hidden;}
    mescla final com a cor real do fundo do site. */
 .sobre-bg{
   position:relative; overflow:hidden; isolation:isolate;
-  display:flex; align-items:center; min-height:56vh;
+  display:flex; align-items:flex-end; min-height:82vh;
 }
 .sobre-bg-photo-sharp, .sobre-bg-photo-blur{
-  position:absolute; inset:0; background-size:cover; background-position:center 20%; z-index:0;
+  position:absolute; inset:0; background-size:cover; background-position:center 28%; z-index:0;
 }
 .sobre-bg-photo-blur{filter:blur(16px) saturate(0.92); transform:scale(1.1);}
 .sobre-bg-photo-sharp{
-  -webkit-mask-image:linear-gradient(180deg, #000 0%, #000 32%, transparent 78%);
-  mask-image:linear-gradient(180deg, #000 0%, #000 32%, transparent 78%);
+  -webkit-mask-image:linear-gradient(180deg, #000 0%, #000 30%, transparent 62%);
+  mask-image:linear-gradient(180deg, #000 0%, #000 30%, transparent 62%);
 }
 .sobre-bg-wash{
   position:absolute; inset:0; z-index:0;
-  background:linear-gradient(180deg, transparent 0%, transparent 25%, var(--linen) 92%);
+  background:linear-gradient(180deg, transparent 0%, transparent 20%, var(--linen) 78%);
 }
-.sobre-bg-copy{position:relative; z-index:1; max-width:58ch; padding:5rem 6vw;}
+.sobre-bg-copy{position:relative; z-index:1; max-width:58ch; padding:0 6vw 3.4rem;}
 @media (max-width:700px){
-  .sobre-bg{min-height:50vh;}
-  .sobre-bg-photo-sharp, .sobre-bg-photo-blur{background-position:center 42%;}
-  .sobre-bg-photo-blur{filter:blur(10px) saturate(0.94);}
+  .sobre-bg{min-height:72vh;}
+  .sobre-bg-photo-sharp, .sobre-bg-photo-blur{background-position:center 22%;}
+  .sobre-bg-photo-blur{filter:blur(12px) saturate(0.94);}
   .sobre-bg-photo-sharp{
-    -webkit-mask-image:linear-gradient(180deg, #000 0%, #000 24%, transparent 68%);
-    mask-image:linear-gradient(180deg, #000 0%, #000 24%, transparent 68%);
+    -webkit-mask-image:linear-gradient(180deg, #000 0%, #000 24%, transparent 52%);
+    mask-image:linear-gradient(180deg, #000 0%, #000 24%, transparent 52%);
   }
-  .sobre-bg-wash{background:linear-gradient(180deg, transparent 0%, transparent 18%, var(--linen) 88%);}
-  .sobre-bg-copy{padding:3.6rem 6vw 3rem;}
+  .sobre-bg-wash{background:linear-gradient(180deg, transparent 0%, transparent 16%, var(--linen) 68%);}
+  .sobre-bg-copy{padding:0 6vw 2.6rem;}
 }
 
 /* ---------- Prévia da equipe (página institucional) ---------- */

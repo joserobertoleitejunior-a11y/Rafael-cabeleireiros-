@@ -4,16 +4,20 @@
 <meta charset="UTF-8">
 <script>
 (function () {
-  // Autocorreção de cache — mesmo mecanismo das outras páginas do site.
+  // Autocorreção de cache — mesmo mecanismo das outras páginas do site
+  // (compara com a última versão vista em localStorage; ver index.html).
+  var BUILD = '20260830s';
   try {
-    if (sessionStorage.getItem('rafaelFreshLoad')) return;
-    sessionStorage.setItem('rafaelFreshLoad', '1');
     if (location.protocol.indexOf('http') !== 0) return;
+    if (localStorage.getItem('rafaelBuildSeen') === BUILD) return;
     var u = new URL(location.href);
-    if (u.searchParams.has('_r')) return;
-    u.searchParams.set('_r', Date.now().toString(36));
+    if (u.searchParams.get('_r') === BUILD) {
+      localStorage.setItem('rafaelBuildSeen', BUILD);
+      return;
+    }
+    u.searchParams.set('_r', BUILD);
     location.replace(u.toString());
-  } catch (e) { /* sessionStorage bloqueado — segue sem forçar */ }
+  } catch (e) { /* localStorage bloqueado — segue sem forçar */ }
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -25,7 +29,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/admin.css?v=20260830r">
+<link rel="stylesheet" href="assets/css/admin.css?v=20260830s">
 <style>
   .assinar-wrap{max-width:460px; margin:0 auto; padding:4rem 6vw;}
   .assinar-wrap h1{font-size:1.6rem; margin-bottom:0.4rem;}

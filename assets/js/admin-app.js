@@ -900,8 +900,13 @@
         (t.foto_url ? '<img class="adm-team-photo" src="' + esc(t.foto_url) + '" alt="">' : '<div class="adm-team-photo-fallback">' + esc(t.nome.charAt(0)) + '</div>') +
         '<div class="adm-team-name">' + esc(t.nome) + (t.role === 'owner' ? ' <span style="color:var(--adm-gold); font-size:0.7rem;">· DONO</span>' : '') + '</div>' +
         '<div class="adm-team-role">' + esc(t.especialidade || '') + '</div>' +
-        '<label class="adm-team-upload">Trocar foto<input type="file" accept="image/*" data-team-photo="' + t.id + '" style="display:block; margin-top:0.3rem;"></label>' +
-        '<div style="display:flex; gap:0.5rem; margin-top:0.5rem; flex-wrap:wrap;">' +
+        '<div class="adm-photo-actions">' +
+        '<label class="adm-photo-upload" title="Trocar foto">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>' +
+        '<input type="file" accept="image/*" data-team-photo="' + t.id + '"></label>' +
+        (t.foto_url ? '<button type="button" class="adm-photo-remove" data-remove-team-photo="' + t.id + '" title="Remover foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' : '') +
+        '</div>' +
+        '<div style="display:flex; gap:0.5rem; margin-top:0.5rem; flex-wrap:wrap; justify-content:center;">' +
         '<button type="button" class="adm-btn adm-btn-ghost adm-btn-sm" data-edit-team="' + t.id + '">Editar especialidade</button>' +
         (t.role === 'owner' ? '' : '<button type="button" class="adm-btn adm-btn-danger adm-btn-sm" data-remove-team="' + t.id + '">Remover</button>') +
         '</div>' +
@@ -975,6 +980,13 @@
           .catch(function (e) { alert('Não deu pra trocar a foto: ' + e.message); });
       });
     });
+    $all('[data-remove-team-photo]', container).forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (confirm('Remover a foto de perfil desse profissional?')) {
+          Store.updateStaffPhoto(session.token, btn.dataset.removeTeamPhoto, null).then(renderServicos).catch(function (e) { alert(e.message); });
+        }
+      });
+    });
   }
 
   function renderServiceForm(service) {
@@ -1007,8 +1019,13 @@
       '<div class="adm-field"><label>Nome</label><input id="prdNome" type="text" value="' + (product ? esc(product.nome) : '') + '"></div>' +
       '<div class="adm-field"><label>Descrição (opcional)</label><input id="prdDescricao" type="text" value="' + (product ? esc(product.descricao || '') : '') + '"></div>' +
       '<div class="adm-field"><label>Preço (R$)</label><input id="prdPreco" type="number" step="0.01" min="0" value="' + (product ? product.preco : '') + '"></div>' +
-      '<div class="adm-field"><label>Foto (opcional)</label><input id="prdFoto" type="file" accept="image/*"></div>' +
+      '<div class="adm-field"><label>Foto (opcional)</label>' +
+      '<label class="adm-photo-picker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>' +
+      '<span id="prdFotoNome">Escolher foto</span><input id="prdFoto" type="file" accept="image/*"></label></div>' +
       '<button type="button" class="adm-btn adm-btn-block" id="prdSalvar">Salvar</button>';
+    wrap.querySelector('#prdFoto').addEventListener('change', function (e) {
+      wrap.querySelector('#prdFotoNome').textContent = e.target.files[0] ? e.target.files[0].name : 'Escolher foto';
+    });
     wrap.querySelector('#prdSalvar').addEventListener('click', function () {
       var nome = wrap.querySelector('#prdNome').value.trim();
       var descricao = wrap.querySelector('#prdDescricao').value.trim();
@@ -1037,10 +1054,15 @@
       '<div class="adm-field"><label>Nome</label><input id="teamNome" type="text"></div>' +
       '<div class="adm-field"><label>Especialidade</label><input id="teamEsp" type="text" placeholder="Ex: Barbeiro · Colorista"></div>' +
       '<div class="adm-field"><label>PIN de acesso (mínimo 4 números)</label><input id="teamPin" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="Ex: 1234"></div>' +
-      '<div class="adm-field"><label>Foto (opcional)</label><input id="teamFoto" type="file" accept="image/*"></div>' +
+      '<div class="adm-field"><label>Foto (opcional)</label>' +
+      '<label class="adm-photo-picker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>' +
+      '<span id="teamFotoNome">Escolher foto</span><input id="teamFoto" type="file" accept="image/*"></label></div>' +
       '<p style="color:var(--adm-text-faint); font-size:0.8rem; margin:-0.4rem 0 1rem;">Esse PIN abre o Caixa PDV, Clientes e Galeria pra essa pessoa — sem acesso ao Dashboard nem a Serviços e Valores.</p>' +
       '<button type="button" class="adm-btn adm-btn-block" id="teamSalvar">Salvar</button>' +
       '<p class="admin-pin-error" id="teamFormError" style="margin-top:0.8rem;"></p>';
+    wrap.querySelector('#teamFoto').addEventListener('change', function (e) {
+      wrap.querySelector('#teamFotoNome').textContent = e.target.files[0] ? e.target.files[0].name : 'Escolher foto';
+    });
     wrap.querySelector('#teamSalvar').addEventListener('click', function () {
       var nome = wrap.querySelector('#teamNome').value.trim();
       var esp = wrap.querySelector('#teamEsp').value.trim();

@@ -207,6 +207,16 @@
 .adm-pick-card.selected{border-color:var(--adm-gold); background:var(--adm-gold-bg);}
 .adm-pick-card:active{transform:scale(0.97); transition:transform 0.1s ease;}
 
+/* ---------- Horários (grade de caixinhas, mesmo espírito do adm-pick-card) ---------- */
+.adm-slot-grid{display:flex; flex-wrap:wrap; gap:0.5rem;}
+.adm-slot-btn{
+  padding:0.55rem 0.95rem; border-radius:8px; border:1px solid var(--adm-gold-soft);
+  background:var(--adm-panel-alt); color:var(--adm-off-white); font-size:0.86rem; cursor:pointer;
+}
+.adm-slot-btn.selected{border-color:var(--adm-gold); background:var(--adm-gold-bg); color:var(--adm-gold);}
+.adm-slot-btn.disabled, .adm-slot-btn:disabled{opacity:0.35; cursor:default; text-decoration:line-through;}
+.adm-slot-btn:active:not(:disabled){transform:scale(0.95); transition:transform 0.1s ease;}
+
 /* ---------- PDV: alternância agendar / cortado agora ---------- */
 .adm-toggle-row{display:flex; gap:0.6rem;}
 .adm-toggle-btn{

@@ -529,22 +529,15 @@
       .filter(function (a) { return a.status !== 'cancelado' && a.dia >= hojeIso; })
       .sort(function (a, b) { return (a.dia + a.horario).localeCompare(b.dia + b.horario); });
 
+    // Estado local do formulário "+ Novo agendamento" — refeito do zero toda
+    // vez que a Agenda é renderizada (mesma vida útil que os <select> tinham
+    // antes), só que agora com caixinhas clicáveis em vez de <select>, pra
+    // combinar com o resto do admin (Caixa PDV já usa esse padrão).
+    var agFormState = { staffId: null, staffNome: '', servico: null, dia: '', horario: null, cliNome: '', cliTel: '', slots: [], slotsLoading: false };
+
     var html = '<div class="admin-view-head"><p class="eyebrow">Marcações</p><h2>Agenda</h2><p>Agendamentos feitos pelo site e marcados no balcão — qualquer pessoa da equipe pode marcar ou desmarcar.</p></div>';
 
-    html += '<div class="adm-panel"><h3 style="margin-bottom:0.8rem;font-size:1.1rem;">+ Novo agendamento</h3>' +
-      '<div class="adm-field-row"><div class="adm-field"><label>Nome do cliente</label><input id="agCliNome" type="text" placeholder="Nome do cliente"></div>' +
-      '<div class="adm-field"><label>WhatsApp</label><input id="agCliTel" type="tel" inputmode="tel" placeholder="(15) 90000-0000"></div></div>' +
-      '<div class="adm-field-row"><div class="adm-field"><label>Profissional</label><select id="agStaff"><option value="">Sem preferência</option>' +
-      team.map(function (t) { return '<option value="' + t.id + '" data-nome="' + esc(t.nome) + '">' + esc(t.nome) + '</option>'; }).join('') +
-      '</select></div>' +
-      '<div class="adm-field"><label>Serviço</label><select id="agServico"><option value="">Escolha</option>' +
-      services.map(function (s) { return '<option value="' + esc(s.nome) + '">' + esc(s.nome) + '</option>'; }).join('') +
-      '</select></div></div>' +
-      '<div class="adm-field-row"><div class="adm-field"><label>Dia</label><input id="agDia" type="date" min="' + hojeIso + '"></div>' +
-      '<div class="adm-field"><label>Horário</label><select id="agHorario"><option value="">Escolha o dia</option></select></div></div>' +
-      '<button type="button" class="adm-btn adm-btn-block" id="agSalvar">Marcar</button>' +
-      '<p id="agMsg" style="margin-top:0.6rem;font-size:0.82rem;"></p>' +
-      '</div>';
+    html += '<div class="adm-panel" id="agNovoPanel"></div>';
 
     html += '<div class="adm-panel" style="margin-top:1.2rem;"><h3 style="margin-bottom:0.6rem;font-size:1.1rem;">Próximos agendamentos</h3>';
     if (!futuros.length) {
@@ -578,48 +571,120 @@
       });
     });
 
-    var diaInput = $('#agDia', container);
-    var staffSelect = $('#agStaff', container);
-    var horarioSelect = $('#agHorario', container);
+    renderAgNovoPanel();
 
-    function atualizarSlots() {
-      var dia = diaInput.value;
-      if (!dia) { horarioSelect.innerHTML = '<option value="">Escolha o dia</option>'; return; }
-      horarioSelect.innerHTML = '<option value="">Carregando…</option>';
-      Store.agendaSlots(dia, staffSelect.value || null).then(function (slots) {
-        if (!slots.length) { horarioSelect.innerHTML = '<option value="">Fechado nesse dia</option>'; return; }
-        horarioSelect.innerHTML = '<option value="">Escolha o horário</option>' + slots.map(function (s) {
-          return '<option value="' + s.horario + '"' + (s.disponivel ? '' : ' disabled') + '>' + s.horario + (s.disponivel ? '' : ' (ocupado)') + '</option>';
-        }).join('');
-      }).catch(function () { horarioSelect.innerHTML = '<option value="">Não deu pra carregar</option>'; });
-    }
-    diaInput.addEventListener('change', atualizarSlots);
-    staffSelect.addEventListener('change', atualizarSlots);
+    function renderAgNovoPanel() {
+      var panel = $('#agNovoPanel', container);
 
-    $('#agSalvar', container).addEventListener('click', function () {
-      var msg = $('#agMsg', container);
-      var staffOpt = staffSelect.options[staffSelect.selectedIndex];
-      var cliNome = $('#agCliNome', container).value.trim();
-      var cliTel = $('#agCliTel', container).value.trim();
-      var dia = diaInput.value;
-      var horario = horarioSelect.value;
-      if (!cliNome || !cliTel || !dia || !horario) {
-        msg.style.color = 'var(--adm-danger)';
-        msg.textContent = 'Preencha nome, WhatsApp, dia e horário.';
-        return;
+      var novoHtml = '<h3 style="margin-bottom:0.8rem;font-size:1.1rem;">+ Novo agendamento</h3>' +
+        '<div class="adm-field-row"><div class="adm-field"><label>Nome do cliente</label><input id="agCliNome" type="text" placeholder="Nome do cliente" value="' + esc(agFormState.cliNome) + '"></div>' +
+        '<div class="adm-field"><label>WhatsApp</label><input id="agCliTel" type="tel" inputmode="tel" placeholder="(15) 90000-0000" value="' + esc(agFormState.cliTel) + '"></div></div>';
+
+      novoHtml += '<div class="adm-field"><label>Profissional</label><div class="adm-pick-grid">' +
+        '<button type="button" class="adm-pick-card' + (!agFormState.staffId ? ' selected' : '') + '" data-staff-pick="">' +
+        '<span class="avatar-fallback">—</span><span>Sem preferência</span></button>' +
+        team.map(function (t) {
+          return '<button type="button" class="adm-pick-card' + (agFormState.staffId === t.id ? ' selected' : '') + '" data-staff-pick="' + t.id + '" data-staff-nome="' + esc(t.nome) + '">' +
+            (t.foto_url ? '<img src="' + esc(t.foto_url) + '" alt="">' : '<span class="avatar-fallback">' + esc(t.nome.charAt(0)) + '</span>') +
+            '<span>' + esc(t.nome) + '</span></button>';
+        }).join('') +
+        '</div></div>';
+
+      novoHtml += '<div class="adm-field"><label>Serviço <span style="text-transform:none; opacity:0.7;">(opcional)</span></label><div class="adm-pick-grid">' +
+        services.map(function (s) {
+          return '<button type="button" class="adm-pick-card' + (agFormState.servico === s.nome ? ' selected' : '') + '" data-servico-pick="' + esc(s.nome) + '">' +
+            '<span>' + esc(s.nome) + '</span><span class="price">' + fmtBRL(s.preco) + '</span></button>';
+        }).join('') +
+        '</div></div>';
+
+      novoHtml += '<div class="adm-field"><label>Dia</label><input id="agDia" type="date" min="' + hojeIso + '" value="' + esc(agFormState.dia) + '"></div>';
+
+      novoHtml += '<div class="adm-field"><label>Horário</label>';
+      if (!agFormState.dia) {
+        novoHtml += '<p style="color:var(--adm-text-faint); font-size:0.85rem; margin:0;">Escolha o dia primeiro.</p>';
+      } else if (agFormState.slotsLoading) {
+        novoHtml += '<p style="color:var(--adm-text-faint); font-size:0.85rem; margin:0;">Carregando horários…</p>';
+      } else if (!agFormState.slots.length) {
+        novoHtml += '<p style="color:var(--adm-text-faint); font-size:0.85rem; margin:0;">Fechado nesse dia.</p>';
+      } else {
+        novoHtml += '<div class="adm-slot-grid">' + agFormState.slots.map(function (s) {
+          return '<button type="button" class="adm-slot-btn' + (agFormState.horario === s.horario ? ' selected' : '') + (s.disponivel ? '' : ' disabled') + '"' +
+            (s.disponivel ? ' data-slot-pick="' + s.horario + '"' : ' disabled title="Já ocupado"') + '>' + s.horario + '</button>';
+        }).join('') + '</div>';
       }
-      msg.textContent = '';
-      Store.createAppointment({
-        clienteNome: cliNome, clienteTelefone: cliTel,
-        staffId: staffSelect.value || null,
-        staffNome: staffSelect.value ? staffOpt.getAttribute('data-nome') : null,
-        servico: $('#agServico', container).value || null,
-        dia: dia, diaLabel: fmtDayBR(dia), horario: horario
-      }).then(renderAgenda).catch(function (e) {
-        msg.style.color = 'var(--adm-danger)';
-        msg.textContent = e.message;
+      novoHtml += '</div>';
+
+      novoHtml += '<button type="button" class="adm-btn adm-btn-block" id="agSalvar">Marcar</button>' +
+        '<p id="agMsg" style="margin-top:0.6rem;font-size:0.82rem;"></p>';
+
+      panel.innerHTML = novoHtml;
+
+      $('#agCliNome', panel).addEventListener('input', function (e) { agFormState.cliNome = e.target.value; });
+      $('#agCliTel', panel).addEventListener('input', function (e) { agFormState.cliTel = e.target.value; });
+
+      $all('[data-staff-pick]', panel).forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          agFormState.staffId = btn.dataset.staffPick || null;
+          agFormState.staffNome = btn.dataset.staffNome || '';
+          agFormState.horario = null;
+          if (agFormState.dia) carregarSlots(); else renderAgNovoPanel();
+        });
       });
-    });
+
+      $all('[data-servico-pick]', panel).forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          agFormState.servico = agFormState.servico === btn.dataset.servicoPick ? null : btn.dataset.servicoPick;
+          renderAgNovoPanel();
+        });
+      });
+
+      var diaInput = $('#agDia', panel);
+      diaInput.addEventListener('change', function () {
+        agFormState.dia = diaInput.value;
+        agFormState.horario = null;
+        if (agFormState.dia) carregarSlots(); else { agFormState.slots = []; renderAgNovoPanel(); }
+      });
+
+      $all('[data-slot-pick]', panel).forEach(function (btn) {
+        btn.addEventListener('click', function () { agFormState.horario = btn.dataset.slotPick; renderAgNovoPanel(); });
+      });
+
+      $('#agSalvar', panel).addEventListener('click', function () {
+        var msg = $('#agMsg', panel);
+        var cliNome = agFormState.cliNome.trim();
+        var cliTel = agFormState.cliTel.trim();
+        if (!cliNome || !cliTel || !agFormState.dia || !agFormState.horario) {
+          msg.style.color = 'var(--adm-danger)';
+          msg.textContent = 'Preencha nome, WhatsApp, dia e horário.';
+          return;
+        }
+        msg.textContent = '';
+        Store.createAppointment({
+          clienteNome: cliNome, clienteTelefone: cliTel,
+          staffId: agFormState.staffId || null,
+          staffNome: agFormState.staffId ? agFormState.staffNome : null,
+          servico: agFormState.servico || null,
+          dia: agFormState.dia, diaLabel: fmtDayBR(agFormState.dia), horario: agFormState.horario
+        }).then(renderAgenda).catch(function (e) {
+          msg.style.color = 'var(--adm-danger)';
+          msg.textContent = e.message;
+        });
+      });
+    }
+
+    function carregarSlots() {
+      agFormState.slotsLoading = true;
+      renderAgNovoPanel();
+      Store.agendaSlots(agFormState.dia, agFormState.staffId || null).then(function (slots) {
+        agFormState.slots = slots;
+        agFormState.slotsLoading = false;
+        renderAgNovoPanel();
+      }).catch(function () {
+        agFormState.slots = [];
+        agFormState.slotsLoading = false;
+        renderAgNovoPanel();
+      });
+    }
   }
 
   // ----------------------------------------------------------- Dashboard

@@ -40,6 +40,19 @@
     }
   }
 
+  // Transforma o objeto de erro do Brick (formato varia — às vezes tem
+  // .message, às vezes uma lista em .cause) numa frase legível, pra
+  // aparecer escrita na tela mesmo sem abrir o console do navegador.
+  function descreverErroBrick(error) {
+    if (!error) return 'Erro desconhecido no formulário de pagamento.';
+    if (typeof error === 'string') return error;
+    if (error.cause && error.cause.length) {
+      return error.cause.map(function (c) { return c.description || c.code || JSON.stringify(c); }).join(' · ');
+    }
+    if (error.message) return error.message;
+    try { return JSON.stringify(error).slice(0, 300); } catch (e) { return 'Erro no formulário de pagamento (sem detalhes).'; }
+  }
+
   // Monta um Payment Brick pra cobrar um valor único agora (taxa de
   // criação, ou Pix avulso da mensalidade). opts: {publicKey, amount,
   // telefone, tipo, forma, edgeUrl, containerId, onResult}
@@ -70,6 +83,11 @@
           },
           onError: function (error) {
             console.error('Erro no Payment Brick:', error);
+            // Mostra o erro escrito na tela (não só no console) — quem
+            // está testando pelo celular não tem como abrir o F12 fácil,
+            // e sem isso o "Ocorreu um erro" do próprio Brick não dizia
+            // nada sobre a causa real.
+            opts.onResult({ error: descreverErroBrick(error) });
           },
           onReady: function () {}
         }
@@ -109,6 +127,11 @@
           },
           onError: function (error) {
             console.error('Erro no Payment Brick:', error);
+            // Mostra o erro escrito na tela (não só no console) — quem
+            // está testando pelo celular não tem como abrir o F12 fácil,
+            // e sem isso o "Ocorreu um erro" do próprio Brick não dizia
+            // nada sobre a causa real.
+            opts.onResult({ error: descreverErroBrick(error) });
           },
           onReady: function () {}
         }
